@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #A83F5B;
+  --color-secondary: #E8A0AD;
+  --color-accent: #C9A45C;
+  --color-background: #FFF9F5;
+  --color-surface: #FFFFFF;
+  --color-heading: #29252A;
+  --color-body: #6F6870;
+  --color-success: #3F7D58;
+  --color-error: #C84B4B;
+}
+
+html, body {
+  background-color: #FFF9F5;
+  color: #29252A;
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbars strictly using palette */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(232, 160, 173, 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A83F5B;
+}
+
+/* Completely remove scrollbars on mobile and responsive preview to prevent edge lines */
+@media (max-width: 1024px) {
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+  html, body, * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+}
+
+/* Form input focus styles */
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid #A83F5B;
+  outline-offset: -1px;
+}
