@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiClient from '../services/api';
 import {
   initialCategories,
   initialOccasions,
@@ -70,6 +71,24 @@ export const AdminProvider = ({ children }) => {
       console.error('Failed to save admin state:', e);
     }
   }, [state]);
+
+  // Load live products from MongoDB Atlas Backend on Mount
+  useEffect(() => {
+    apiClient.get('/customer/products')
+      .then(res => {
+        const live = res.data?.products || (Array.isArray(res.data) ? res.data : []);
+        if (live.length > 0) {
+          setState(prev => ({
+            ...prev,
+            products: live.map(p => ({
+              ...p,
+              id: p._id || p.id,
+            }))
+          }));
+        }
+      })
+      .catch(err => console.warn('Could not load live backend products:', err.message));
+  }, []);
 
   // Products
   const addProduct = (productData) => {
@@ -496,3 +515,4 @@ export const useAdmin = () => {
   }
   return context;
 };
+
