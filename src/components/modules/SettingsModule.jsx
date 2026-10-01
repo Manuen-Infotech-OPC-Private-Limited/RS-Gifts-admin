@@ -10,21 +10,9 @@ export const SettingsModule = () => {
   const { settings, updateSettings } = useAdmin();
 
   const [formData, setFormData] = useState({ ...settings });
-  const [errors, setErrors] = useState({});
-
-  const validateForm = () => {
-    const errs = {};
-    if (!formData.storeName.trim()) errs.storeName = 'Store name is required.';
-    if (!formData.supportEmail.trim() || !formData.supportEmail.includes('@')) {
-      errs.supportEmail = 'Valid support email is required.';
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
 
   const handleSave = (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
     updateSettings(formData);
   };
 
@@ -44,8 +32,8 @@ export const SettingsModule = () => {
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-charcoal">Store Identity & Contact</h3>
-              <p className="text-xs text-soft-gray">General information shown on receipts and store header</p>
+              <h3 className="text-base font-bold text-charcoal">Store Logo & Branding</h3>
+              <p className="text-xs text-soft-gray">Store logo shown on receipts and website header</p>
             </div>
           </div>
 
@@ -54,76 +42,6 @@ export const SettingsModule = () => {
               value={formData.storeLogo || ''}
               onChange={(url) => setFormData({ ...formData, storeLogo: url })}
               label="Store Logo"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Store Name
-              </label>
-              <input
-                type="text"
-                value={formData.storeName}
-                onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary ${errors.storeName ? 'border-error' : 'border-soft-gray/25'
-                  }`}
-              />
-              {errors.storeName && <p className="text-xs text-error mt-1">{errors.storeName}</p>}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Store Tagline
-              </label>
-              <input
-                type="text"
-                value={formData.storeTagline}
-                onChange={(e) => setFormData({ ...formData, storeTagline: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Customer Support Email
-              </label>
-              <input
-                type="email"
-                value={formData.supportEmail}
-                onChange={(e) => setFormData({ ...formData, supportEmail: e.target.value })}
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary ${errors.supportEmail ? 'border-error' : 'border-soft-gray/25'
-                  }`}
-              />
-              {errors.supportEmail && (
-                <p className="text-xs text-error mt-1">{errors.supportEmail}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Contact Number
-              </label>
-              <input
-                type="text"
-                value={formData.contactPhone}
-                onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              Address
-            </label>
-            <input
-              type="text"
-              value={formData.storeAddress}
-              onChange={(e) => setFormData({ ...formData, storeAddress: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
             />
           </div>
         </div>

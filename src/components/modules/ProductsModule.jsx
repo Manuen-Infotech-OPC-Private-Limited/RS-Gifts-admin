@@ -4,7 +4,6 @@ import {
   Search,
   Edit2,
   Trash2,
-  Sparkles,
   Star,
   Image as ImageIcon
 } from 'lucide-react';
@@ -13,6 +12,15 @@ import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
+
+export const AVAILABLE_TARGET_PAGES = [
+  'Birthday Gifts',
+  'Anniversary Gifts',
+  'Personalized Gifts',
+  'Festival Gifts',
+  'Hampers',
+  'New Arrivals'
+];
 
 export const ProductsModule = () => {
   const {
@@ -28,6 +36,7 @@ export const ProductsModule = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedPage, setSelectedPage] = useState('ALL');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -37,7 +46,9 @@ export const ProductsModule = () => {
     title: '',
     sku: '',
     description: '',
-    category: categories[0]?.name || '',
+    category: categories[0]?.name || 'Gifts',
+    targetPage: 'Birthday Gifts',
+    targetPages: ['Birthday Gifts'],
     price: '',
     stock: '',
     lowStockThreshold: 5,
@@ -60,8 +71,10 @@ export const ProductsModule = () => {
     setEditingProduct(product);
     setFormData({
       ...product,
+      targetPage: product.targetPage || (Array.isArray(product.targetPages) ? product.targetPages[0] : '') || '',
+      targetPages: Array.isArray(product.targetPages) && product.targetPages.length > 0 ? product.targetPages : (product.targetPage ? [product.targetPage] : []),
       price: (product.price || product.salePrice || '').toString(),
-      stock: product.stock.toString(),
+      stock: (product.stock ?? 0).toString(),
       lowStockThreshold: product.lowStockThreshold || 5
     });
     setErrors({});
@@ -99,22 +112,25 @@ export const ProductsModule = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    const targetPagesList = Array.isArray(formData.targetPages) && formData.targetPages.length > 0
+      ? formData.targetPages
+      : (formData.targetPage ? [formData.targetPage] : (formData.category ? [formData.category] : []));
+
+    const productPayload = {
+      ...formData,
+      targetPages: targetPagesList,
+      targetPage: formData.targetPage || targetPagesList[0] || '',
+      occasions: targetPagesList,
+      price: parseFloat(formData.price),
+      salePrice: parseFloat(formData.price),
+      stock: parseInt(formData.stock, 10),
+      lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5
+    };
+
     if (editingProduct) {
-      updateProduct(editingProduct.id, {
-        ...formData,
-        price: parseFloat(formData.price),
-        salePrice: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
-        lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5
-      });
+      updateProduct(editingProduct.id, productPayload);
     } else {
-      addProduct({
-        ...formData,
-        price: parseFloat(formData.price),
-        salePrice: parseFloat(formData.price),
-        stock: parseInt(formData.stock, 10),
-        lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5
-      });
+      addProduct(productPayload);
     }
     setIsModalOpen(false);
   };
@@ -124,7 +140,16 @@ export const ProductsModule = () => {
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = selectedCategory === 'ALL' || p.category === selectedCategory;
-    return matchesSearch && matchesCat;
+    const pPages = Array.isArray(p.targetPages) && p.targetPages.length > 0
+      ? p.targetPages
+      : (p.targetPage ? [p.targetPage] : [p.category]);
+    const matchesPage =
+      selectedPage === 'ALL' ||
+      pPages.some((pg) => pg?.toLowerCase() === selectedPage.toLowerCase()) ||
+      p.targetPage?.toLowerCase() === selectedPage.toLowerCase() ||
+      p.category?.toLowerCase() === selectedPage.toLowerCase();
+
+    return matchesSearch && matchesCat && matchesPage;
   });
 
   return (
@@ -133,12 +158,12 @@ export const ProductsModule = () => {
         <div>
           <h1 className="text-2xl font-bold text-charcoal tracking-tight">Gift Catalog</h1>
           <p className="text-sm text-soft-gray mt-1">
-            Manage your gift products, pricing, stock levels, and customization settings.
+            Manage your gift products, pricing, stock levels, and assign to customer pages.
           </p>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Add New Gift
@@ -157,7 +182,22 @@ export const ProductsModule = () => {
           />
         </div>
 
-        <div className="w-full md:w-56">
+        <div className="w-full md:w-48">
+          <select
+            value={selectedPage}
+            onChange={(e) => setSelectedPage(e.target.value)}
+            className="w-full px-3.5 py-2 text-sm rounded-xl border border-soft-gray/25 bg-surface text-charcoal focus:border-primary focus:ring-1 focus:ring-primary font-medium"
+          >
+            <option value="ALL">All Store Pages</option>
+            {AVAILABLE_TARGET_PAGES.map((p) => (
+              <option key={p} value={p}>
+                Page: {p}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="w-full md:w-48">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -216,13 +256,8 @@ export const ProductsModule = () => {
                           <ImageIcon className="w-5 h-5 text-primary/70" />
                         </div>
                         <div>
-                          <div className="font-semibold text-charcoal flex items-center gap-1.5">
+                          <div className="font-semibold text-charcoal">
                             {p.title}
-                            {p.featured && (
-                              <span title="Featured Product">
-                                <Sparkles className="w-3.5 h-3.5 text-accent" />
-                              </span>
-                            )}
                           </div>
                           <span className="text-xs text-soft-gray font-mono">SKU: {p.sku}</span>
                         </div>
@@ -231,6 +266,23 @@ export const ProductsModule = () => {
 
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-charcoal">{p.category}</div>
+                      {(p.targetPage || (Array.isArray(p.targetPages) && p.targetPages.length > 0)) && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(Array.isArray(p.targetPages) && p.targetPages.length > 0
+                            ? p.targetPages
+                            : [p.targetPage]
+                          )
+                            .filter(Boolean)
+                            .map((pg) => (
+                              <span
+                                key={pg}
+                                className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold"
+                              >
+                                {pg}
+                              </span>
+                            ))}
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-6 py-4">
@@ -269,14 +321,14 @@ export const ProductsModule = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => toggleProductFeatured(p.id)}
+                          onClick={() => toggleProductFeatured(p.id || p._id)}
                           className={`p-1.5 rounded-lg border transition-colors ${p.featured
-                            ? 'bg-accent/20 text-accent border-accent/40'
-                            : 'text-soft-gray border-soft-gray/20 hover:text-charcoal hover:bg-warm-ivory'
+                            ? 'bg-[#C9A45C]/15 text-[#916F2E] border-[#C9A45C]/40 hover:bg-[#C9A45C]/25'
+                            : 'text-soft-gray border-soft-gray/20 hover:text-[#C9A45C] hover:bg-[#C9A45C]/10'
                             }`}
-                          title="Toggle Featured"
+                          title={p.featured ? 'Remove from Featured Products' : 'Add to Featured Products'}
                         >
-                          <Star className="w-4 h-4" />
+                          <Star className="w-4 h-4" fill={p.featured ? 'currentColor' : 'none'} />
                         </button>
                         <button
                           onClick={() => handleOpenEdit(p)}
@@ -387,6 +439,74 @@ export const ProductsModule = () => {
                 placeholder="Brief gift highlight or product description..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
               />
+            </div>
+          </div>
+
+          {/* Add Page / Select Page Option */}
+          <div className="bg-warm-ivory/40 p-4 rounded-xl border border-soft-gray/25">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-charcoal">
+                Add to Page / Select Page
+              </label>
+              <span className="text-[11px] text-soft-gray">
+                Assign which customer storefront page displays this gift
+              </span>
+            </div>
+
+            <select
+              value={formData.targetPage}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData({
+                  ...formData,
+                  targetPage: val,
+                  targetPages: val ? [val] : []
+                });
+              }}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary font-medium mb-2.5"
+            >
+              <option value="">-- Standard Catalog Only (No specific occasion page) --</option>
+              {AVAILABLE_TARGET_PAGES.map((page) => (
+                <option key={page} value={page}>
+                  {page}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-soft-gray font-medium mr-1">Quick Select:</span>
+              {AVAILABLE_TARGET_PAGES.map((page) => {
+                const isSelected =
+                  (formData.targetPages || []).includes(page) || formData.targetPage === page;
+                return (
+                  <button
+                    type="button"
+                    key={page}
+                    onClick={() => {
+                      const currentPages = Array.isArray(formData.targetPages) ? [...formData.targetPages] : [];
+                      let newPages;
+                      if (currentPages.includes(page)) {
+                        newPages = currentPages.filter((p) => p !== page);
+                      } else {
+                        newPages = [...currentPages, page];
+                      }
+                      setFormData({
+                        ...formData,
+                        targetPages: newPages,
+                        targetPage: newPages[0] || ''
+                      });
+                    }}
+                    className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
+                    }`}
+                  >
+                    {isSelected ? '✓ ' : '+ '}
+                    {page}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

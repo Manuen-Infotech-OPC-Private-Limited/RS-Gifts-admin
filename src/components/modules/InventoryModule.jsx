@@ -69,7 +69,7 @@ export const InventoryModule = () => {
         <div className="bg-surface p-4 rounded-2xl border border-soft-gray/20 shadow-card">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-soft-gray">
-              Total Units
+              Total Items
             </span>
             <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center text-primary">
               <Boxes className="w-4 h-4" />
@@ -134,31 +134,28 @@ export const InventoryModule = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFilterType('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-              filterType === 'ALL'
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${filterType === 'ALL'
                 ? 'bg-primary text-surface shadow-sm'
                 : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal'
-            }`}
+              }`}
           >
             All Items ({products.length})
           </button>
           <button
             onClick={() => setFilterType('LOW')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-              filterType === 'LOW'
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${filterType === 'LOW'
                 ? 'bg-primary text-surface shadow-sm'
                 : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal'
-            }`}
+              }`}
           >
             Low Stock ({lowStockCount})
           </button>
           <button
             onClick={() => setFilterType('OUT')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-              filterType === 'OUT'
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${filterType === 'OUT'
                 ? 'bg-primary text-surface shadow-sm'
                 : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal'
-            }`}
+              }`}
           >
             Out of Stock ({outOfStockCount})
           </button>

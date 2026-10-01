@@ -4,45 +4,74 @@
  * or returns direct URL if provided.
  */
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 export const uploadToCloudinary = async (file, cloudName, uploadPreset) => {
-  if (!cloudName || !uploadPreset) {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve({
-          url: reader.result,
-          public_id: 'local_' + Date.now(),
-          format: file.type.split('/')[1] || 'jpg',
-          simulated: true,
-          message: 'Saved locally as Data URL (Configure Cloudinary in Settings for production CDN hosting)'
-        });
-      };
-      reader.readAsDataURL(file);
+  // 1. Primary: Upload via backend /api/upload (uses active server-side Cloudinary credentials)
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const backendRes = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
     });
+    if (backendRes.ok) {
+      const data = await backendRes.json();
+      if (data && data.url) {
+        return {
+          url: data.url,
+          public_id: data.public_id || ('cloud_' + Date.now()),
+          format: data.format || file.type.split('/')[1] || 'jpg',
+          simulated: false,
+          provider: data.provider || 'cloudinary'
+        };
+      }
+    }
+  } catch (backendErr) {
+    console.warn('Backend Cloudinary upload route failed, trying fallback...', backendErr);
   }
 
-  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', uploadPreset);
+  // 2. Direct unsigned Cloudinary upload if preset is provided
+  if (cloudName && uploadPreset) {
+    try {
+      const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData,
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          url: data.secure_url,
+          public_id: data.public_id,
+          format: data.format,
+          simulated: false
+        };
+      }
+    } catch (directErr) {
+      console.warn('Direct Cloudinary upload failed:', directErr);
+    }
+  }
+
+  // 3. Fallback: Data URL if server is unreachable
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve({
+        url: reader.result,
+        public_id: 'local_' + Date.now(),
+        format: file.type.split('/')[1] || 'jpg',
+        simulated: true,
+        message: 'Saved locally as Data URL'
+      });
+    };
+    reader.readAsDataURL(file);
   });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData?.error?.message || 'Failed to upload image to Cloudinary');
-  }
-
-  const data = await response.json();
-  return {
-    url: data.secure_url,
-    public_id: data.public_id,
-    format: data.format,
-    simulated: false
-  };
 };
 
 export const validateImageFile = (file, maxMb = 5) => {

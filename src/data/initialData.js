@@ -100,12 +100,10 @@ export const initialTestimonials = [];
 export const initialReviews = [];
 
 export const initialSettings = {
-  storeName: 'RS GIFTS',
-  storeLogo: '',
-  storeTagline: '',
-  supportEmail: '',
   contactPhone: '',
+  contactEmail: '',
   storeAddress: '',
+  supportHours: '',
   currencySymbol: '₹',
   standardShippingFee: 0,
   freeShippingThreshold: 0,

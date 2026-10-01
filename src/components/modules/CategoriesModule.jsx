@@ -44,16 +44,25 @@ export const CategoriesModule = () => {
     e.preventDefault();
     const errs = {};
     if (!catForm.name.trim()) errs.name = 'Category name is required.';
-    if (!catForm.slug.trim()) errs.slug = 'Slug is required (e.g. customized-mugs).';
     if (Object.keys(errs).length > 0) {
       setCatErrors(errs);
       return;
     }
 
+    const autoSlug = (catForm.slug?.trim() || catForm.name.trim())
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    const finalForm = {
+      ...catForm,
+      slug: autoSlug || 'category'
+    };
+
     if (editingCategory) {
-      updateCategory(editingCategory.id, catForm);
+      updateCategory(editingCategory.id, finalForm);
     } else {
-      addCategory(catForm);
+      addCategory(finalForm);
     }
     setIsCatModalOpen(false);
   };
@@ -124,20 +133,18 @@ export const CategoriesModule = () => {
                       />
                     ) : null}
                     <div
-                      className={`w-full h-full items-center justify-center bg-secondary/15 text-primary ${
-                        cat.image ? 'hidden' : 'flex'
-                      }`}
+                      className={`w-full h-full items-center justify-center bg-secondary/15 text-primary ${cat.image ? 'hidden' : 'flex'
+                        }`}
                     >
                       <Tag className="w-8 h-8 text-primary/50" />
                     </div>
                     <div className="absolute top-3 right-3">
                       <button
                         onClick={() => toggleCategoryActive(cat.id)}
-                        className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm border ${
-                          cat.active
+                        className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm border ${cat.active
                             ? 'bg-surface text-success border-success/30'
                             : 'bg-surface text-soft-gray border-soft-gray/30'
-                        }`}
+                          }`}
                       >
                         {cat.active ? 'Active' : 'Inactive'}
                       </button>
@@ -203,26 +210,12 @@ export const CategoriesModule = () => {
                 });
               }}
               placeholder="e.g. Personalized Wooden Gifts"
-              className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
-                catErrors.name ? 'border-error' : 'border-soft-gray/25'
-              }`}
+              className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${catErrors.name ? 'border-error' : 'border-soft-gray/25'
+                }`}
             />
             {catErrors.name && <p className="text-xs text-error mt-1">{catErrors.name}</p>}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              URL Slug
-            </label>
-            <input
-              type="text"
-              value={catForm.slug}
-              onChange={(e) => setCatForm({ ...catForm, slug: e.target.value })}
-              placeholder="e.g. personalized-wooden-gifts"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
-            />
-            {catErrors.slug && <p className="text-xs text-error mt-1">{catErrors.slug}</p>}
-          </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">

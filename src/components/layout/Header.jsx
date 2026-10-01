@@ -125,6 +125,21 @@ export const Header = ({ onOpenSidebar }) => {
           )}
         </div>
 
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              localStorage.removeItem('rs_admin_token');
+              localStorage.removeItem('rs_admin_user');
+              localStorage.removeItem('rs_gifts_token');
+              localStorage.removeItem('rs_gifts_user');
+              window.location.href = 'http://localhost:5173/';
+            }}
+            className="p-2 px-3 rounded-xl text-soft-gray hover:text-error hover:bg-error/10 border border-soft-gray/20 transition-colors text-xs font-semibold cursor-pointer"
+            title="Sign out of admin"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </header>
   );

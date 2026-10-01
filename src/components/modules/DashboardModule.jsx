@@ -8,8 +8,7 @@ import {
   Gift,
   ArrowUpRight,
   Plus,
-  Percent,
-  Sparkles
+  Percent
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
@@ -84,9 +83,8 @@ export const DashboardModule = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-charcoal tracking-tight">
-              {settings.storeName ? `${settings.storeName} Admin` : 'Gift Store Admin'}
+              Welcome Admin
             </h1>
-            <Sparkles className="w-5 h-5 text-accent" />
           </div>
           <p className="text-sm text-soft-gray mt-1">
             Overview of store performance, catalog inventory, and incoming customer gift orders.
