@@ -31,10 +31,18 @@ export const AdminProvider = ({ children }) => {
         const filteredCoupons = (parsed.coupons || []).filter(
           c => c.code !== 'WELCOME10' && c.code !== 'FESTIVE25' && c.code !== 'FLAT200' && c.id !== 'coup-1' && c.id !== 'coup-2' && c.id !== 'coup-3'
         );
+        const cleanedReviews = (parsed.reviews || []).map(r => {
+          let cName = (r.customerName || '').trim();
+          if (!cName || /^\s*rs\s*gifts?\s*$/i.test(cName)) {
+            cName = 'Verified Customer';
+          }
+          return { ...r, customerName: cName };
+        });
         return {
           ...parsed,
           categories: (parsed.categories && parsed.categories.length > 0) ? parsed.categories : initialCategories,
           coupons: filteredCoupons,
+          reviews: cleanedReviews,
           settings: {
             ...initialSettings,
             ...(parsed.settings || {}),
@@ -216,6 +224,41 @@ export const AdminProvider = ({ children }) => {
           })
           .catch(() => {});
       });
+
+    // Load live reviews from backend API
+    apiClient.get('/admin/reviews')
+      .then(res => {
+        const liveReviews = res.data?.reviews || [];
+        if (liveReviews.length > 0) {
+          setState(prev => {
+            const mapped = liveReviews.map(r => {
+              let cName = (r.customerName || '').trim();
+              if (!cName || /^\s*rs\s*gifts?\s*$/i.test(cName)) {
+                cName = 'Verified Customer';
+              }
+              return {
+                id: r._id,
+                _id: r._id,
+                productId: r.product?._id || r.product || '',
+                productTitle: r.product?.title || r.product?.name || 'Gift Item',
+                customerName: cName,
+                rating: r.rating,
+                comment: r.comment,
+                date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+                status: r.isApproved ? 'approved' : 'hidden',
+                adminReply: r.adminReply || '',
+              };
+            });
+            const liveIds = new Set(mapped.map(m => m.id));
+            const retained = (prev.reviews || []).filter(lr => !liveIds.has(lr.id) && !liveIds.has(lr._id));
+            return {
+              ...prev,
+              reviews: [...mapped, ...retained]
+            };
+          });
+        }
+      })
+      .catch(e => console.warn('Could not load backend reviews:', e.message));
   }, []);
 
   // Products (Live Sync with MongoDB Backend)
@@ -761,28 +804,125 @@ export const AdminProvider = ({ children }) => {
     }));
   };
 
-  // Reviews
-  const approveReview = (id) => {
+  // Reviews (Full Admin Control & Backend Sync)
+  const addReview = async (reviewData) => {
+    let finalName = (reviewData.customerName || '').trim();
+    if (!finalName || /^\s*rs\s*gifts?\s*$/i.test(finalName)) {
+      finalName = 'Verified Customer';
+    }
+
+    const tempId = 'rev_' + Date.now();
+    const newRev = {
+      id: tempId,
+      _id: tempId,
+      productId: reviewData.productId || '',
+      productTitle: reviewData.productTitle || '',
+      customerName: finalName,
+      rating: Number(reviewData.rating) || 5,
+      comment: (reviewData.comment || '').trim(),
+      date: reviewData.date || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      status: reviewData.status || 'approved'
+    };
+
     setState(prev => ({
       ...prev,
-      reviews: prev.reviews.map(r => r.id === id ? { ...r, status: 'approved' } : r)
+      reviews: [newRev, ...prev.reviews]
     }));
+
+    try {
+      const res = await apiClient.post('/admin/reviews', {
+        productId: reviewData.productId,
+        customerName: finalName,
+        rating: Number(reviewData.rating) || 5,
+        comment: (reviewData.comment || '').trim(),
+        isApproved: reviewData.status !== 'hidden',
+      });
+      if (res.data?.review?._id) {
+        setState(prev => ({
+          ...prev,
+          reviews: prev.reviews.map(r => r.id === tempId ? { ...r, id: res.data.review._id, _id: res.data.review._id } : r)
+        }));
+      }
+    } catch (err) {
+      console.warn('Backend addReview sync note:', err.message);
+    }
+
+    showToast('Customer review added successfully.');
+    return newRev;
+  };
+
+  const updateReview = async (id, updatedData) => {
+    let finalName = updatedData.customerName !== undefined ? updatedData.customerName.trim() : undefined;
+    if (finalName !== undefined && (!finalName || /^\s*rs\s*gifts?\s*$/i.test(finalName))) {
+      finalName = 'Verified Customer';
+    }
+
+    setState(prev => ({
+      ...prev,
+      reviews: prev.reviews.map(r => {
+        if (r.id === id || r._id === id) {
+          return {
+            ...r,
+            ...(finalName !== undefined ? { customerName: finalName } : {}),
+            ...(updatedData.rating !== undefined ? { rating: Number(updatedData.rating) } : {}),
+            ...(updatedData.comment !== undefined ? { comment: updatedData.comment.trim() } : {}),
+            ...(updatedData.status !== undefined ? { status: updatedData.status } : {}),
+          };
+        }
+        return r;
+      })
+    }));
+
+    try {
+      await apiClient.put(`/admin/reviews/${id}`, {
+        ...(finalName !== undefined ? { customerName: finalName } : {}),
+        ...(updatedData.rating !== undefined ? { rating: Number(updatedData.rating) } : {}),
+        ...(updatedData.comment !== undefined ? { comment: updatedData.comment.trim() } : {}),
+        ...(updatedData.status !== undefined ? { isApproved: updatedData.status === 'approved' } : {}),
+      });
+    } catch (err) {
+      console.warn('Backend updateReview sync note:', err.message);
+    }
+
+    showToast('Review updated successfully.');
+  };
+
+  const approveReview = async (id) => {
+    setState(prev => ({
+      ...prev,
+      reviews: prev.reviews.map(r => (r.id === id || r._id === id) ? { ...r, status: 'approved' } : r)
+    }));
+    try {
+      await apiClient.patch(`/admin/reviews/${id}/toggle-approve`);
+    } catch (err) {
+      console.warn('Backend approve sync note:', err.message);
+    }
     showToast('Review approved for public display.');
   };
 
-  const hideReview = (id) => {
+  const hideReview = async (id) => {
     setState(prev => ({
       ...prev,
-      reviews: prev.reviews.map(r => r.id === id ? { ...r, status: 'hidden' } : r)
+      reviews: prev.reviews.map(r => (r.id === id || r._id === id) ? { ...r, status: 'hidden' } : r)
     }));
+    try {
+      await apiClient.patch(`/admin/reviews/${id}/toggle-approve`);
+    } catch (err) {
+      console.warn('Backend hide sync note:', err.message);
+    }
     showToast('Review hidden from customers.');
   };
 
-  const deleteReview = (id) => {
+  const deleteReview = async (id) => {
     setState(prev => ({
       ...prev,
-      reviews: prev.reviews.filter(r => r.id !== id)
+      reviews: prev.reviews.filter(r => r.id !== id && r._id !== id)
     }));
+    try {
+      await apiClient.delete(`/admin/reviews/${id}`);
+    } catch (err) {
+      console.warn('Backend delete sync note:', err.message);
+    }
     showToast('Review deleted.', 'error');
   };
 
@@ -866,6 +1006,8 @@ export const AdminProvider = ({ children }) => {
         addTestimonial,
         deleteTestimonial,
         toggleTestimonialActive,
+        addReview,
+        updateReview,
         approveReview,
         hideReview,
         deleteReview,

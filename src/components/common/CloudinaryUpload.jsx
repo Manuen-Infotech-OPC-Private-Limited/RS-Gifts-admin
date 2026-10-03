@@ -144,8 +144,9 @@ export const CloudinaryUpload = ({
                 </p>
                 {hint && <p className="text-xs text-soft-gray">{hint}</p>}
                 {cloudName && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-accent font-medium mt-1">
-                    ☁️ Cloudinary: {cloudName}
+                  <span className="inline-flex items-center gap-1.5 text-[11px] text-accent font-medium mt-1">
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>Cloudinary: {cloudName}</span>
                   </span>
                 )}
               </>

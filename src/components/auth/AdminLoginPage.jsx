@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight } from 'lucide-react';
 
 export const AdminLoginPage = () => {
   useEffect(() => {
@@ -18,9 +18,10 @@ export const AdminLoginPage = () => {
         </p>
         <a
           href="http://localhost:5173/"
-          className="inline-block px-6 py-2.5 rounded-xl bg-[#821D38] text-white text-xs font-bold hover:bg-[#6e162e] transition-colors"
+          className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#821D38] text-white text-xs font-bold hover:bg-[#6e162e] transition-colors"
         >
-          Go to Storefront ↗
+          <span>Go to Storefront</span>
+          <ArrowUpRight size={14} />
         </a>
       </div>
     </div>
