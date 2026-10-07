@@ -61,3 +61,11 @@ input:focus, select:focus, textarea:focus {
   outline: 2px solid #A83F5B;
   outline-offset: -1px;
 }
+
+/* Remove default black focus outline from all buttons */
+button,
+button:focus,
+button:focus-visible,
+button:active {
+  outline: none !important;
+}

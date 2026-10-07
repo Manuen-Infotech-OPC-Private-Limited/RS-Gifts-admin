@@ -295,7 +295,7 @@ export const ReviewsModule = () => {
                   <option value="" disabled>-- Select a gift product --</option>
                   {products.map((p) => (
                     <option key={p.id || p._id} value={p.id || p._id}>
-                      {p.name || p.title} ({p.sku || 'No SKU'})
+                      {p.name || p.title} ({p.productId || p.sku || 'No ID'})
                     </option>
                   ))}
                 </select>

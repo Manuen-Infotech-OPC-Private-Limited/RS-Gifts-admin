@@ -7,8 +7,7 @@ import {
   MapPin,
   Mail,
   Gift,
-  ExternalLink,
-  Sparkles
+  ExternalLink
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
@@ -89,11 +88,10 @@ export const OrdersModule = () => {
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                statusFilter === status
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${statusFilter === status
                   ? 'bg-primary text-surface shadow-sm'
                   : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal hover:bg-warm-ivory'
-              }`}
+                }`}
             >
               {status}
             </button>
@@ -167,10 +165,10 @@ export const OrdersModule = () => {
                         order.orderStatus === 'Delivered'
                           ? 'success'
                           : order.orderStatus === 'Shipped'
-                          ? 'accent'
-                          : order.orderStatus === 'Cancelled'
-                          ? 'error'
-                          : 'primary'
+                            ? 'accent'
+                            : order.orderStatus === 'Cancelled'
+                              ? 'error'
+                              : 'primary'
                       }
                     >
                       {order.orderStatus}
@@ -193,7 +191,7 @@ export const OrdersModule = () => {
                 <tr>
                   <td colSpan="8" className="text-center py-12 text-sm text-soft-gray">
                     {orders.length === 0
-                      ? 'No customer orders placed yet. Orders received from the customer storefront will appear here.'
+                      ? 'No customer orders placed yet..'
                       : 'No customer orders found matching this filter.'}
                   </td>
                 </tr>
@@ -220,10 +218,10 @@ export const OrdersModule = () => {
                       selectedOrder.orderStatus === 'Delivered'
                         ? 'success'
                         : selectedOrder.orderStatus === 'Shipped'
-                        ? 'accent'
-                        : selectedOrder.orderStatus === 'Cancelled'
-                        ? 'error'
-                        : 'primary'
+                          ? 'accent'
+                          : selectedOrder.orderStatus === 'Cancelled'
+                            ? 'error'
+                            : 'primary'
                     }
                   >
                     {selectedOrder.orderStatus}
@@ -333,7 +331,7 @@ export const OrdersModule = () => {
 
                         {item.personalizationData.giftWrap && (
                           <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent px-2 py-0.5 rounded bg-accent/15">
-                            <Sparkles className="w-3 h-3" /> Includes Luxury Ribbon Wrap
+                            <Gift className="w-3 h-3" /> Includes Luxury Ribbon Wrap
                           </div>
                         )}
                       </div>

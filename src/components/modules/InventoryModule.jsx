@@ -28,10 +28,11 @@ export const InventoryModule = () => {
   const totalStockUnits = products.reduce((acc, p) => acc + (p.stock || 0), 0);
 
   const filteredProducts = products.filter((p) => {
+    const pId = p.productId || p.sku || (p.id ? String(p.id) : '');
     const matchesSearch =
-      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchTerm.toLowerCase());
+      (p.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.category || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
     if (filterType === 'LOW') return p.stock <= (p.lowStockThreshold || 5) && p.stock > 0;
@@ -126,7 +127,7 @@ export const InventoryModule = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search inventory by title, SKU, or category..."
+            placeholder="Search inventory by title, ID, or category..."
             className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-soft-gray/25 bg-warm-ivory/40 text-charcoal placeholder-soft-gray focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -168,6 +169,7 @@ export const InventoryModule = () => {
             <thead className="bg-warm-ivory/60 text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15">
               <tr>
                 <th className="px-6 py-3.5">Product</th>
+                <th className="px-6 py-3.5">Product ID</th>
                 <th className="px-6 py-3.5">Category</th>
                 <th className="px-6 py-3.5">Price</th>
                 <th className="px-6 py-3.5">Stock Status</th>
@@ -195,11 +197,14 @@ export const InventoryModule = () => {
                             e.target.src = 'https://images.unsplash.com/photo-1549465220-1a8b9238cdcd?w=200';
                           }}
                         />
-                        <div>
-                          <p className="font-semibold text-charcoal">{product.title}</p>
-                          <span className="text-xs text-soft-gray font-mono">SKU: {product.sku}</span>
-                        </div>
+                        <p className="font-semibold text-charcoal">{product.title}</p>
                       </div>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center text-xs font-mono font-bold text-primary bg-warm-ivory/80 px-2.5 py-1 rounded-lg border border-soft-gray/20 shadow-xs">
+                        {product.productId || product.sku || (product.id ? String(product.id).slice(-6).toUpperCase() : 'N/A')}
+                      </span>
                     </td>
 
                     <td className="px-6 py-4 text-xs font-medium text-charcoal">

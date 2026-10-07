@@ -36,9 +36,13 @@ export const WebsiteContent = () => {
 
   const [contactForm, setContactForm] = useState({
     phone: settings?.contactPhone || '',
+    altPhone: settings?.altContactPhone || '',
     email: settings?.contactEmail || settings?.supportEmail || '',
+    altEmail: settings?.altContactEmail || '',
     location: settings?.storeAddress || '',
     hours: settings?.supportHours || '',
+    altHours: settings?.altSupportHours || '',
+    googleMapUrl: settings?.googleMapUrl || '',
   });
   const [isSavingContact, setIsSavingContact] = useState(false);
   const [contactErrors, setContactErrors] = useState({});
@@ -57,9 +61,13 @@ export const WebsiteContent = () => {
         if (s) {
           setContactForm({
             phone: s.contactPhone || '',
+            altPhone: s.altContactPhone || '',
             email: s.contactEmail || s.supportEmail || '',
+            altEmail: s.altContactEmail || '',
             location: s.storeAddress || '',
             hours: s.supportHours || '',
+            altHours: s.altSupportHours || '',
+            googleMapUrl: s.googleMapUrl || '',
           });
         }
       } catch (e) {
@@ -73,9 +81,13 @@ export const WebsiteContent = () => {
     if (settings) {
       setContactForm(prev => ({
         phone: settings.contactPhone ?? prev.phone,
+        altPhone: settings.altContactPhone ?? prev.altPhone,
         email: settings.contactEmail ?? settings.supportEmail ?? prev.email,
+        altEmail: settings.altContactEmail ?? prev.altEmail,
         location: settings.storeAddress ?? prev.location,
         hours: settings.supportHours ?? prev.hours,
+        altHours: settings.altSupportHours ?? prev.altHours,
+        googleMapUrl: settings.googleMapUrl ?? prev.googleMapUrl,
       }));
     }
   }, [settings]);
@@ -97,15 +109,23 @@ export const WebsiteContent = () => {
     try {
       await updateSettings({
         contactPhone: contactForm.phone.trim(),
+        altContactPhone: contactForm.altPhone.trim(),
         contactEmail: contactForm.email.trim(),
+        altContactEmail: contactForm.altEmail.trim(),
         storeAddress: contactForm.location.trim(),
         supportHours: contactForm.hours.trim(),
+        altSupportHours: contactForm.altHours.trim(),
+        googleMapUrl: contactForm.googleMapUrl.trim(),
       });
       const contactData = {
         phone: contactForm.phone.trim(),
+        altPhone: contactForm.altPhone.trim(),
         email: contactForm.email.trim(),
+        altEmail: contactForm.altEmail.trim(),
         location: contactForm.location.trim(),
         hours: contactForm.hours.trim(),
+        altHours: contactForm.altHours.trim(),
+        googleMapUrl: contactForm.googleMapUrl.trim(),
       };
       localStorage.setItem('rs_gifts_contact_info', JSON.stringify(contactData));
       window.dispatchEvent(new CustomEvent('rs_gifts_contact_updated', { detail: contactData }));
@@ -211,11 +231,10 @@ export const WebsiteContent = () => {
       <div className="flex items-center gap-6">
         <button
           onClick={() => setActiveTab('banners')}
-          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${
-            activeTab === 'banners'
-              ? 'text-primary font-bold'
-              : 'text-soft-gray hover:text-charcoal'
-          }`}
+          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${activeTab === 'banners'
+            ? 'text-primary font-bold'
+            : 'text-soft-gray hover:text-charcoal'
+            }`}
         >
           <ImageIcon className="w-4 h-4" />
           <span>Homepage Banners ({banners.length})</span>
@@ -223,22 +242,20 @@ export const WebsiteContent = () => {
 
         <button
           onClick={() => setActiveTab('featured')}
-          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${
-            activeTab === 'featured'
-              ? 'text-primary font-bold'
-              : 'text-soft-gray hover:text-charcoal'
-          }`}
+          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${activeTab === 'featured'
+            ? 'text-primary font-bold'
+            : 'text-soft-gray hover:text-charcoal'
+            }`}
         >
           <span>Featured Gifts Showcase ({products.filter((p) => p.featured).length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('contact')}
-          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${
-            activeTab === 'contact'
-              ? 'text-primary font-bold'
-              : 'text-soft-gray hover:text-charcoal'
-          }`}
+          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${activeTab === 'contact'
+            ? 'text-primary font-bold'
+            : 'text-soft-gray hover:text-charcoal'
+            }`}
         >
           <Phone className="w-4 h-4" />
           <span>Contact Us</span>
@@ -293,11 +310,10 @@ export const WebsiteContent = () => {
                     <div className="absolute top-3 right-3">
                       <button
                         onClick={() => toggleBannerActive(bannerId)}
-                        className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm border transition-colors ${
-                          banner.active
-                            ? 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50'
-                            : 'bg-white text-stone-500 border-stone-300 hover:bg-stone-50'
-                        }`}
+                        className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm border transition-colors ${banner.active
+                          ? 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50'
+                          : 'bg-white text-stone-500 border-stone-300 hover:bg-stone-50'
+                          }`}
                       >
                         {banner.active ? 'Active' : 'Inactive'}
                       </button>
@@ -351,22 +367,20 @@ export const WebsiteContent = () => {
               <button
                 type="button"
                 onClick={() => setFeaturedFilter('all')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  featuredFilter === 'all'
-                    ? 'bg-surface text-charcoal shadow-sm'
-                    : 'text-soft-gray hover:text-charcoal'
-                }`}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${featuredFilter === 'all'
+                  ? 'bg-surface text-charcoal shadow-sm'
+                  : 'text-soft-gray hover:text-charcoal'
+                  }`}
               >
                 All ({products.length})
               </button>
               <button
                 type="button"
                 onClick={() => setFeaturedFilter('featured')}
-                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  featuredFilter === 'featured'
-                    ? 'bg-[#C9A45C] text-white shadow-sm'
-                    : 'text-soft-gray hover:text-charcoal'
-                }`}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${featuredFilter === 'featured'
+                  ? 'bg-[#C9A45C] text-white shadow-sm'
+                  : 'text-soft-gray hover:text-charcoal'
+                  }`}
               >
                 <Star className="w-3.5 h-3.5 fill-current" />
                 Featured ({products.filter((p) => p.featured).length})
@@ -374,11 +388,10 @@ export const WebsiteContent = () => {
               <button
                 type="button"
                 onClick={() => setFeaturedFilter('unfeatured')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  featuredFilter === 'unfeatured'
-                    ? 'bg-surface text-charcoal shadow-sm'
-                    : 'text-soft-gray hover:text-charcoal'
-                }`}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${featuredFilter === 'unfeatured'
+                  ? 'bg-surface text-charcoal shadow-sm'
+                  : 'text-soft-gray hover:text-charcoal'
+                  }`}
               >
                 Not Featured ({products.filter((p) => !p.featured).length})
               </button>
@@ -402,11 +415,10 @@ export const WebsiteContent = () => {
                   return (
                     <div
                       key={pid}
-                      className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                        p.featured
-                          ? 'border-[#C9A45C]/40 bg-[#C9A45C]/5 shadow-xs'
-                          : 'border-soft-gray/20 bg-warm-ivory/20 hover:border-soft-gray/40'
-                      }`}
+                      className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${p.featured
+                        ? 'border-[#C9A45C]/40 bg-[#C9A45C]/5 shadow-xs'
+                        : 'border-soft-gray/20 bg-warm-ivory/20 hover:border-soft-gray/40'
+                        }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <img
@@ -433,11 +445,10 @@ export const WebsiteContent = () => {
 
                       <button
                         onClick={() => toggleProductFeatured(pid)}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs ${
-                          p.featured
-                            ? 'bg-[#C9A45C] text-white border-[#B48F47] hover:bg-[#B48F47]'
-                            : 'bg-surface text-charcoal border-soft-gray/25 hover:border-[#C9A45C] hover:text-[#C9A45C] hover:bg-[#C9A45C]/10'
-                        }`}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs ${p.featured
+                          ? 'bg-[#C9A45C] text-white border-[#B48F47] hover:bg-[#B48F47]'
+                          : 'bg-surface text-charcoal border-soft-gray/25 hover:border-[#C9A45C] hover:text-[#C9A45C] hover:bg-[#C9A45C]/10'
+                          }`}
                         title={p.featured ? 'Remove from Featured Products' : 'Add to Featured Products'}
                       >
                         <Star className="w-3.5 h-3.5" fill={p.featured ? 'currentColor' : 'none'} />
@@ -467,12 +478,12 @@ export const WebsiteContent = () => {
 
           <div className="bg-surface p-6 sm:p-8 rounded-2xl border border-soft-gray/20 shadow-card space-y-5">
             <form onSubmit={handleSaveContact} className="space-y-5">
+              {/* Phone Numbers */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Phone */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-primary" />
-                    Customer Support Phone *
+                    Customer Support Phone
                   </label>
                   <input
                     type="text"
@@ -482,16 +493,33 @@ export const WebsiteContent = () => {
                       if (contactErrors.phone) setContactErrors({ ...contactErrors, phone: '' });
                     }}
                     placeholder="+91 98765 43210"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${
-                      contactErrors.phone ? 'border-error' : 'border-soft-gray/25'
-                    }`}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.phone ? 'border-error' : 'border-soft-gray/25'
+                      }`}
                   />
                   {contactErrors.phone && (
                     <p className="text-xs text-error mt-1">{contactErrors.phone}</p>
                   )}
                 </div>
 
-                {/* Email */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-primary" />
+                    Alternate Phone (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={contactForm.altPhone}
+                    onChange={(e) => {
+                      setContactForm({ ...contactForm, altPhone: e.target.value });
+                    }}
+                    placeholder="+91 98765 43211 (Leave empty if none)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Email Addresses */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-primary" />
@@ -505,41 +533,55 @@ export const WebsiteContent = () => {
                       if (contactErrors.email) setContactErrors({ ...contactErrors, email: '' });
                     }}
                     placeholder="support@rsgifts.in"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${
-                      contactErrors.email ? 'border-error' : 'border-soft-gray/25'
-                    }`}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.email ? 'border-error' : 'border-soft-gray/25'
+                      }`}
                   />
                   {contactErrors.email && (
                     <p className="text-xs text-error mt-1">{contactErrors.email}</p>
                   )}
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Location / Address */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-primary" />
-                    Store Location / Address *
+                    <Mail className="w-3.5 h-3.5 text-primary" />
+                    Alternate Email (Optional)
                   </label>
                   <input
-                    type="text"
-                    value={contactForm.location}
+                    type="email"
+                    value={contactForm.altEmail}
                     onChange={(e) => {
-                      setContactForm({ ...contactForm, location: e.target.value });
-                      if (contactErrors.location) setContactErrors({ ...contactErrors, location: '' });
+                      setContactForm({ ...contactForm, altEmail: e.target.value });
                     }}
-                    placeholder="Hyderabad, India"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${
-                      contactErrors.location ? 'border-error' : 'border-soft-gray/25'
-                    }`}
+                    placeholder="info@rsgifts.com (Leave empty if none)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
                   />
-                  {contactErrors.location && (
-                    <p className="text-xs text-error mt-1">{contactErrors.location}</p>
-                  )}
                 </div>
+              </div>
 
-                {/* Working Hours */}
+              {/* Store Location */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  Store Location / Address *
+                </label>
+                <input
+                  type="text"
+                  value={contactForm.location}
+                  onChange={(e) => {
+                    setContactForm({ ...contactForm, location: e.target.value });
+                    if (contactErrors.location) setContactErrors({ ...contactErrors, location: '' });
+                  }}
+                  placeholder="Guntur, Andhra Pradesh"
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.location ? 'border-error' : 'border-soft-gray/25'
+                    }`}
+                />
+                {contactErrors.location && (
+                  <p className="text-xs text-error mt-1">{contactErrors.location}</p>
+                )}
+              </div>
+
+              {/* Working Hours */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-primary" />
@@ -553,14 +595,49 @@ export const WebsiteContent = () => {
                       if (contactErrors.hours) setContactErrors({ ...contactErrors, hours: '' });
                     }}
                     placeholder="Mon - Sat: 9:00 AM - 8:00 PM"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${
-                      contactErrors.hours ? 'border-error' : 'border-soft-gray/25'
-                    }`}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.hours ? 'border-error' : 'border-soft-gray/25'
+                      }`}
                   />
                   {contactErrors.hours && (
                     <p className="text-xs text-error mt-1">{contactErrors.hours}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-primary" />
+                    Alternate / Weekend Hours (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={contactForm.altHours}
+                    onChange={(e) => {
+                      setContactForm({ ...contactForm, altHours: e.target.value });
+                    }}
+                    placeholder="Sunday: 10:00 AM - 5:00 PM (Leave empty if none)"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Google Navigation / Map Embed URL */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  Google Navigation / Map Embed URL (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={contactForm.googleMapUrl}
+                  onChange={(e) => {
+                    setContactForm({ ...contactForm, googleMapUrl: e.target.value });
+                  }}
+                  placeholder="https://www.google.com/maps/embed?pb=... (Leave empty to keep blank)"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
+                />
+                <p className="text-[11px] text-soft-gray mt-1">
+                  Paste your Google Maps embed iframe link or navigation URL here. If left empty, it will display as empty on the Contact page.
+                </p>
               </div>
 
               <div className="pt-4 border-t border-soft-gray/15 flex items-center justify-between">
@@ -589,7 +666,20 @@ export const WebsiteContent = () => {
         <form onSubmit={handleBannerSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              Headline Title
+              Tagline / Top Text
+            </label>
+            <input
+              type="text"
+              value={bannerForm.tagline}
+              onChange={(e) => setBannerForm({ ...bannerForm, tagline: e.target.value })}
+              placeholder="e.g. EXCLUSIVE CURATED GIFTS"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+              Headline Title *
             </label>
             <input
               type="text"
@@ -623,7 +713,7 @@ export const WebsiteContent = () => {
                 type="text"
                 value={bannerForm.buttonText}
                 onChange={(e) => setBannerForm({ ...bannerForm, buttonText: e.target.value })}
-                placeholder="Shop Collection"
+                placeholder="Shop Now"
                 className="w-full px-3.5 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
               />
             </div>
@@ -631,12 +721,63 @@ export const WebsiteContent = () => {
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
                 Button Link
               </label>
-              <input
-                type="text"
+              <select
                 value={bannerForm.buttonLink}
                 onChange={(e) => setBannerForm({ ...bannerForm, buttonLink: e.target.value })}
-                placeholder="/products"
-                className="w-full px-3.5 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
+                className="w-full px-3.5 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary cursor-pointer"
+              >
+                <option value="/gifts">All Gifts (/gifts)</option>
+                <option value="/birthday-gifts">Birthday Gifts (/birthday-gifts)</option>
+                <option value="/personalized-gifts">Personalized Gifts (/personalized-gifts)</option>
+                <option value="/category/flowers-hampers">Flowers & Hampers (/category/flowers-hampers)</option>
+                <option value="/category/toys-kids">Teddy & Plush Toys (/category/toys-kids)</option>
+                <option value="/anniversary-gifts">Anniversary Gifts (/anniversary-gifts)</option>
+                <option value="/category/corporate-gifts">Corporate Gifts (/category/corporate-gifts)</option>
+                <option value="/category/home-decor">Home Decor (/category/home-decor)</option>
+                <option value="/contact">Contact Us (/contact)</option>
+                <option value="https://wa.me/919876543210">WhatsApp Chat</option>
+                {!['/gifts', '/birthday-gifts', '/personalized-gifts', '/category/flowers-hampers', '/category/toys-kids', '/anniversary-gifts', '/category/corporate-gifts', '/category/home-decor', '/contact', 'https://wa.me/919876543210'].includes(bannerForm.buttonLink) && bannerForm.buttonLink && (
+                  <option value={bannerForm.buttonLink}>{bannerForm.buttonLink}</option>
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                Badge 1
+              </label>
+              <input
+                type="text"
+                value={bannerForm.badge1}
+                onChange={(e) => setBannerForm({ ...bannerForm, badge1: e.target.value })}
+                placeholder="Fast & Reliable Delivery"
+                className="w-full px-3 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                Badge 2
+              </label>
+              <input
+                type="text"
+                value={bannerForm.badge2}
+                onChange={(e) => setBannerForm({ ...bannerForm, badge2: e.target.value })}
+                placeholder="Secure Payments"
+                className="w-full px-3 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                Badge 3
+              </label>
+              <input
+                type="text"
+                value={bannerForm.badge3}
+                onChange={(e) => setBannerForm({ ...bannerForm, badge3: e.target.value })}
+                placeholder="Easy Returns"
+                className="w-full px-3 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
               />
             </div>
           </div>
@@ -645,10 +786,18 @@ export const WebsiteContent = () => {
             value={bannerForm.imageUrl}
             onChange={(url) => setBannerForm({ ...bannerForm, imageUrl: url })}
             label="Banner Hero Image *"
-            preferredSize="1920 × 700 px"
-            aspectRatio="16:9 (Widescreen)"
-            dimensionNote="Width: 1920 px × Height: 700 px (16:9 Aspect Ratio). Minimum suitable size: 1376 × 768 px. Tip: Keep the main gift/subject towards the right side so the banner headline and button stay clearly readable on the left."
-            hint="Suitable resolution: 1920 × 700 px (Width: 1920px, Height: 700px, 16:9 Ratio). Supports JPG, PNG, WebP."
+            preferredSize="1920 × 600 px"
+            aspectRatio="21:9 (Ultra-Wide)"
+            dimensionNote="Recommended: 1920 px Width × 600 px Height (Ultra-Wide ~21:9). More width, less height."
+            hint="Recommended resolution: 1920 × 600 px (Supports JPG, PNG, WebP)."
+            onDimensionsDetected={(dims) =>
+              setBannerForm((prev) => ({
+                ...prev,
+                width: dims.width,
+                height: dims.height,
+                aspectRatio: dims.aspectRatio,
+              }))
+            }
           />
           {bannerErrors.imageUrl && <p className="text-xs text-error -mt-3">{bannerErrors.imageUrl}</p>}
 
@@ -656,13 +805,13 @@ export const WebsiteContent = () => {
             <button
               type="button"
               onClick={() => setIsBannerModalOpen(false)}
-              className="px-4 py-2 rounded-xl border border-soft-gray/25 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors"
+              className="px-4 py-2 rounded-xl border border-soft-gray/25 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-primary text-surface text-sm font-semibold hover:bg-primary/90 shadow-sm"
+              className="px-5 py-2 rounded-xl bg-primary text-surface text-sm font-semibold hover:bg-primary/90 shadow-sm cursor-pointer"
             >
               Save Banner
             </button>

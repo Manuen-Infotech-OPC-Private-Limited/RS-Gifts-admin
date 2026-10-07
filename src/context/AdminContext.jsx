@@ -38,8 +38,13 @@ export const AdminProvider = ({ children }) => {
           }
           return { ...r, customerName: cName };
         });
+        const cleanedProducts = (parsed.products || []).map(p => ({
+          ...p,
+          productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001')
+        }));
         return {
           ...parsed,
+          products: cleanedProducts,
           categories: (parsed.categories && parsed.categories.length > 0) ? parsed.categories : initialCategories,
           coupons: filteredCoupons,
           reviews: cleanedReviews,
@@ -101,6 +106,7 @@ export const AdminProvider = ({ children }) => {
               ...p,
               id: p._id || p.id,
               _id: p._id || p.id,
+              productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001'),
             }))
           }));
           return;
@@ -119,6 +125,7 @@ export const AdminProvider = ({ children }) => {
               ...p,
               id: p._id || p.id,
               _id: p._id || p.id,
+              productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001'),
             }))
           }));
         }
@@ -222,7 +229,7 @@ export const AdminProvider = ({ children }) => {
               }));
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       });
 
     // Load live reviews from backend API
@@ -261,11 +268,13 @@ export const AdminProvider = ({ children }) => {
       .catch(e => console.warn('Could not load backend reviews:', e.message));
   }, []);
 
-  // Products (Live Sync with MongoDB Backend)
   const addProduct = async (productData) => {
     const tempId = 'prod-' + Date.now();
+    const dynamicId = (productData.productId || productData.sku || '').trim().toUpperCase() || `PRD-${Date.now().toString().slice(-4)}`;
     const payload = {
       ...productData,
+      productId: dynamicId,
+      sku: dynamicId,
       price: Number(productData.price) || 0,
       salePrice: Number(productData.salePrice) || Number(productData.price) || 0,
       stock: Number(productData.stock) || 0,
@@ -286,6 +295,7 @@ export const AdminProvider = ({ children }) => {
           ...created,
           id: created._id || created.id,
           _id: created._id || created.id,
+          productId: created.productId || created.sku || dynamicId,
         };
         setState(prev => ({
           ...prev,
@@ -937,7 +947,7 @@ export const AdminProvider = ({ children }) => {
           location: merged.storeAddress,
           hours: merged.supportHours,
         }));
-      } catch (e) {}
+      } catch (e) { }
       return {
         ...prev,
         settings: merged

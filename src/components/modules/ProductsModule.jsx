@@ -5,6 +5,7 @@ import {
   Edit2,
   Trash2,
   Star,
+  Check,
   Image as ImageIcon
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
@@ -44,6 +45,7 @@ export const ProductsModule = () => {
 
   const initialFormState = {
     title: '',
+    productId: '',
     sku: '',
     description: '',
     category: categories[0]?.name || 'Gifts',
@@ -71,6 +73,8 @@ export const ProductsModule = () => {
     setEditingProduct(product);
     setFormData({
       ...product,
+      productId: product.productId || product.sku || '',
+      sku: product.productId || product.sku || '',
       targetPage: product.targetPage || (Array.isArray(product.targetPages) ? product.targetPages[0] : '') || '',
       targetPages: Array.isArray(product.targetPages) && product.targetPages.length > 0 ? product.targetPages : (product.targetPage ? [product.targetPage] : []),
       price: (product.price || product.salePrice || '').toString(),
@@ -85,9 +89,6 @@ export const ProductsModule = () => {
     const errs = {};
     if (!formData.title.trim() || formData.title.trim().length < 3) {
       errs.title = 'Title must be at least 3 characters.';
-    }
-    if (!formData.sku.trim()) {
-      errs.sku = 'SKU is required (e.g. RS-GIFT-01).';
     }
     const priceNum = parseFloat(formData.price);
     if (isNaN(priceNum) || priceNum <= 0) {
@@ -136,9 +137,10 @@ export const ProductsModule = () => {
   };
 
   const filteredProducts = products.filter((p) => {
+    const pId = p.productId || p.sku || (p.id ? String(p.id) : '');
     const matchesSearch =
-      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      (p.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = selectedCategory === 'ALL' || p.category === selectedCategory;
     const pPages = Array.isArray(p.targetPages) && p.targetPages.length > 0
       ? p.targetPages
@@ -177,7 +179,7 @@ export const ProductsModule = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search gifts by name or SKU..."
+            placeholder="Search gifts by name or ID..."
             className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-soft-gray/25 bg-warm-ivory/40 text-charcoal placeholder-soft-gray focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -219,6 +221,7 @@ export const ProductsModule = () => {
             <thead className="bg-warm-ivory/60 text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15">
               <tr>
                 <th className="px-6 py-3.5">Product</th>
+                <th className="px-6 py-3.5">Product ID</th>
                 <th className="px-6 py-3.5">Category</th>
                 <th className="px-6 py-3.5">Selling Price</th>
                 <th className="px-6 py-3.5">Stock</th>
@@ -259,9 +262,14 @@ export const ProductsModule = () => {
                           <div className="font-semibold text-charcoal">
                             {p.title}
                           </div>
-                          <span className="text-xs text-soft-gray font-mono">SKU: {p.sku}</span>
                         </div>
                       </div>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center text-xs font-mono font-bold text-primary bg-warm-ivory/80 px-2.5 py-1 rounded-lg border border-soft-gray/20 shadow-xs">
+                        {p.productId || p.sku || (p.id ? String(p.id).slice(-6).toUpperCase() : 'N/A')}
+                      </span>
                     </td>
 
                     <td className="px-6 py-4">
@@ -389,17 +397,15 @@ export const ProductsModule = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Product SKU
+                Product ID <span className="text-soft-gray font-normal lowercase">(auto-generated if empty)</span>
               </label>
               <input
                 type="text"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                placeholder="e.g. RS-FRAME-01"
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.sku ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                  }`}
+                value={formData.productId || formData.sku || ''}
+                onChange={(e) => setFormData({ ...formData, productId: e.target.value, sku: e.target.value })}
+                placeholder="e.g. PRD-0001 (or leave blank)"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
               />
-              {errors.sku && <p className="text-xs text-error mt-1">{errors.sku}</p>}
             </div>
           </div>
 
@@ -502,7 +508,7 @@ export const ProductsModule = () => {
                         : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
                     }`}
                   >
-                    {isSelected ? '✓ ' : '+ '}
+                    {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
                     {page}
                   </button>
                 );
