@@ -42,12 +42,21 @@ export const AdminProvider = ({ children }) => {
           ...p,
           productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001')
         }));
+        const cleanedOrders = (parsed.orders || []).map(o => ({
+          ...o,
+          tracking: {
+            carrier: /bluedart/i.test(o.tracking?.carrier || '') ? '' : (o.tracking?.carrier || ''),
+            trackingNumber: /BD987654321/i.test(o.tracking?.trackingNumber || '') ? '' : (o.tracking?.trackingNumber || ''),
+            trackingUrl: o.tracking?.trackingUrl || '',
+          }
+        }));
         return {
           ...parsed,
           products: cleanedProducts,
           categories: (parsed.categories && parsed.categories.length > 0) ? parsed.categories : initialCategories,
           coupons: filteredCoupons,
           reviews: cleanedReviews,
+          orders: cleanedOrders,
           inquiries: parsed.inquiries || [],
           settings: {
             ...initialSettings,

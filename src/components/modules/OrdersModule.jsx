@@ -377,12 +377,12 @@ export const OrdersModule = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-soft-gray mb-1">Carrier Name</label>
+                  <label className="block text-xs font-medium text-soft-gray mb-1">Courier / Carrier Name</label>
                   <input
                     type="text"
                     value={carrier}
                     onChange={(e) => setCarrier(e.target.value)}
-                    placeholder="e.g. BlueDart, FedEx"
+                    placeholder="Enter courier/carrier name"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-soft-gray/25 text-charcoal bg-surface focus:border-primary"
                   />
                 </div>
@@ -392,7 +392,7 @@ export const OrdersModule = () => {
                     type="text"
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="e.g. BD88273918IN"
+                    placeholder="Enter tracking number / AWB"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-soft-gray/25 text-charcoal bg-surface focus:border-primary"
                   />
                 </div>
@@ -402,7 +402,7 @@ export const OrdersModule = () => {
                     type="url"
                     value={trackingUrl}
                     onChange={(e) => setTrackingUrl(e.target.value)}
-                    placeholder="https://track..."
+                    placeholder="https://..."
                     className="w-full px-3 py-2 text-xs rounded-xl border border-soft-gray/25 text-charcoal bg-surface focus:border-primary"
                   />
                 </div>
