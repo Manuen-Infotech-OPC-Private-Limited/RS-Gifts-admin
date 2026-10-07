@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   ShoppingBag,
   Search,
-  Truck,
   Eye,
   MapPin,
   Mail,
@@ -60,37 +59,14 @@ const getCustomerPhone = (order) => {
 };
 
 export const OrdersModule = () => {
-  const { orders, settings, updateOrderStatus, updateOrderTracking, deleteOrder } = useAdmin();
+  const { orders, settings, updateOrderStatus, deleteOrder } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const [carrier, setCarrier] = useState('');
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const [trackingUrl, setTrackingUrl] = useState('');
-
   const handleOpenDetail = (order) => {
     setSelectedOrder(order);
-    setCarrier(order.tracking?.carrier || '');
-    setTrackingNumber(order.tracking?.trackingNumber || '');
-    setTrackingUrl(order.tracking?.trackingUrl || '');
-  };
-
-  const handleSaveTracking = (e) => {
-    e.preventDefault();
-    if (!selectedOrder) return;
-    const targetId = selectedOrder._id || selectedOrder.id;
-    updateOrderTracking(targetId, {
-      carrier,
-      trackingNumber,
-      trackingUrl
-    });
-    setSelectedOrder({
-      ...selectedOrder,
-      tracking: { carrier, trackingNumber, trackingUrl },
-      orderStatus: (selectedOrder.orderStatus === 'Pending' || selectedOrder.orderStatus === 'Processing') ? 'Shipped' : selectedOrder.orderStatus
-    });
   };
 
   const handleStatusChange = (newStatus) => {
@@ -169,7 +145,6 @@ export const OrdersModule = () => {
                 <th className="px-6 py-3.5">Items</th>
                 <th className="px-6 py-3.5">Total Amount</th>
                 <th className="px-6 py-3.5">Payment</th>
-                <th className="px-6 py-3.5">Tracking</th>
                 <th className="px-6 py-3.5">Order Status</th>
                 <th className="px-6 py-3.5 text-right">Action</th>
               </tr>
@@ -208,17 +183,6 @@ export const OrdersModule = () => {
                     </Badge>
                   </td>
 
-                  <td className="px-6 py-4 text-xs">
-                    {order.tracking?.trackingNumber ? (
-                      <div className="flex items-center gap-1 text-primary font-medium">
-                        <Truck className="w-3.5 h-3.5" />
-                        <span>{order.tracking.carrier}</span>
-                      </div>
-                    ) : (
-                      <span className="text-soft-gray">No tracking</span>
-                    )}
-                  </td>
-
                   <td className="px-6 py-4">
                     <Badge
                       variant={
@@ -249,7 +213,7 @@ export const OrdersModule = () => {
 
               {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="text-center py-12 text-sm text-soft-gray">
+                  <td colSpan="7" className="text-center py-12 text-sm text-soft-gray">
                     {orders.length === 0
                       ? 'No customer orders placed yet..'
                       : 'No customer orders found matching this filter.'}
@@ -405,55 +369,6 @@ export const OrdersModule = () => {
                 ))}
               </div>
             </div>
-
-            <form onSubmit={handleSaveTracking} className="p-4 rounded-2xl border border-soft-gray/20 bg-surface space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-charcoal flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-primary" />
-                Courier & Tracking Information
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-soft-gray mb-1">Courier / Carrier Name</label>
-                  <input
-                    type="text"
-                    value={carrier}
-                    onChange={(e) => setCarrier(e.target.value)}
-                    placeholder="Enter courier/carrier name"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-soft-gray/25 text-charcoal bg-surface focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-soft-gray mb-1">Tracking Number / AWB</label>
-                  <input
-                    type="text"
-                    value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="Enter tracking number / AWB"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-soft-gray/25 text-charcoal bg-surface focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-soft-gray mb-1">Tracking URL (optional)</label>
-                  <input
-                    type="url"
-                    value={trackingUrl}
-                    onChange={(e) => setTrackingUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-soft-gray/25 text-charcoal bg-surface focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-1">
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary text-surface text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-                >
-                  Save Tracking Details
-                </button>
-              </div>
-            </form>
           </div>
         </Modal>
       )}
