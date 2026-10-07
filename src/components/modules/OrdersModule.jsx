@@ -14,6 +14,51 @@ import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
 
+const formatShippingAddress = (addr) => {
+  if (!addr) return 'Standard Delivery Address';
+  if (typeof addr === 'string') return addr;
+  if (typeof addr === 'object') {
+    const parts = [
+      addr.addressLine1 || addr.street || addr.address || '',
+      addr.addressLine2 || addr.landmark || '',
+      addr.city || '',
+      addr.state || '',
+      addr.postalCode || addr.pincode ? `PIN: ${addr.postalCode || addr.pincode}` : '',
+      addr.country || ''
+    ].filter(Boolean);
+    const addressStr = parts.join(', ');
+    const recipientStr = addr.recipientName
+      ? `${addr.recipientName}${addr.phone ? ' (' + addr.phone + ')' : ''}`
+      : '';
+    if (recipientStr && addressStr) return `${recipientStr} — ${addressStr}`;
+    return addressStr || recipientStr || 'Standard Delivery Address';
+  }
+  return String(addr);
+};
+
+const getCustomerName = (order) => {
+  if (!order) return 'Customer';
+  if (typeof order.customerName === 'string' && order.customerName.trim()) return order.customerName;
+  if (typeof order.customerInfo === 'object' && order.customerInfo?.name) return order.customerInfo.name;
+  if (typeof order.shippingAddress === 'object' && order.shippingAddress?.recipientName) return order.shippingAddress.recipientName;
+  return 'Customer';
+};
+
+const getCustomerEmail = (order) => {
+  if (!order) return '';
+  if (typeof order.customerEmail === 'string') return order.customerEmail;
+  if (typeof order.customerInfo === 'object' && order.customerInfo?.email) return order.customerInfo.email;
+  return '';
+};
+
+const getCustomerPhone = (order) => {
+  if (!order) return '';
+  if (typeof order.customerPhone === 'string') return order.customerPhone;
+  if (typeof order.customerInfo === 'object' && order.customerInfo?.phone) return order.customerInfo.phone;
+  if (typeof order.shippingAddress === 'object' && order.shippingAddress?.phone) return order.shippingAddress.phone;
+  return '';
+};
+
 export const OrdersModule = () => {
   const { orders, settings, updateOrderStatus, updateOrderTracking, deleteOrder } = useAdmin();
 
@@ -140,8 +185,8 @@ export const OrdersModule = () => {
                   </td>
 
                   <td className="px-6 py-4">
-                    <div className="font-semibold text-charcoal">{order.customerName}</div>
-                    <div className="text-xs text-soft-gray">{order.customerEmail}</div>
+                    <div className="font-semibold text-charcoal">{getCustomerName(order)}</div>
+                    <div className="text-xs text-soft-gray">{getCustomerEmail(order)}</div>
                   </td>
 
                   <td className="px-6 py-4 text-xs">
@@ -269,9 +314,9 @@ export const OrdersModule = () => {
                   <Mail className="w-3.5 h-3.5 text-primary" />
                   Customer Details
                 </h4>
-                <p className="text-sm font-semibold text-charcoal">{selectedOrder.customerName}</p>
-                <p className="text-xs text-soft-gray">{selectedOrder.customerEmail}</p>
-                <p className="text-xs text-soft-gray">{selectedOrder.customerPhone}</p>
+                <p className="text-sm font-semibold text-charcoal">{getCustomerName(selectedOrder)}</p>
+                <p className="text-xs text-soft-gray">{getCustomerEmail(selectedOrder)}</p>
+                <p className="text-xs text-soft-gray">{getCustomerPhone(selectedOrder)}</p>
               </div>
 
               <div className="p-4 rounded-2xl border border-soft-gray/20 bg-surface space-y-2">
@@ -280,18 +325,10 @@ export const OrdersModule = () => {
                   Delivery Destination
                 </h4>
                 <p className="text-xs text-charcoal leading-relaxed font-medium">
-                  {typeof selectedOrder.shippingAddress === 'string'
-                    ? selectedOrder.shippingAddress
-                    : selectedOrder.shippingAddress
-                      ? [
-                          selectedOrder.shippingAddress.addressLine1,
-                          selectedOrder.shippingAddress.addressLine2,
-                          `${selectedOrder.shippingAddress.city || ''}${selectedOrder.shippingAddress.state ? ', ' + selectedOrder.shippingAddress.state : ''} ${selectedOrder.shippingAddress.postalCode ? '- ' + selectedOrder.shippingAddress.postalCode : ''}`,
-                        ].filter(Boolean).join(', ')
-                      : 'Standard Shipping Address'}
+                  {formatShippingAddress(selectedOrder.shippingAddress)}
                 </p>
                 <p className="text-xs text-soft-gray">
-                  Payment: <span className="font-semibold text-charcoal">{selectedOrder.paymentMethod || 'COD'}</span> ({selectedOrder.paymentStatus || 'Pending'})
+                  Payment: <span className="font-semibold text-charcoal">{typeof selectedOrder.paymentMethod === 'string' ? selectedOrder.paymentMethod : 'COD'}</span> ({typeof selectedOrder.paymentStatus === 'string' ? selectedOrder.paymentStatus : 'Pending'})
                 </p>
                 {selectedOrder.notes && (
                   <p className="text-xs text-primary bg-primary/5 p-2 rounded-lg font-medium">
