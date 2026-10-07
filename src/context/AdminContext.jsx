@@ -48,6 +48,7 @@ export const AdminProvider = ({ children }) => {
           categories: (parsed.categories && parsed.categories.length > 0) ? parsed.categories : initialCategories,
           coupons: filteredCoupons,
           reviews: cleanedReviews,
+          inquiries: parsed.inquiries || [],
           settings: {
             ...initialSettings,
             ...(parsed.settings || {}),
@@ -71,6 +72,7 @@ export const AdminProvider = ({ children }) => {
       banners: initialContentBanners,
       testimonials: initialTestimonials,
       reviews: initialReviews,
+      inquiries: [],
       settings: initialSettings
     };
   });
@@ -266,6 +268,53 @@ export const AdminProvider = ({ children }) => {
         }
       })
       .catch(e => console.warn('Could not load backend reviews:', e.message));
+
+    // Load live customer orders from backend API
+    apiClient.get('/admin/orders')
+      .then(res => {
+        const liveOrders = res.data?.orders || [];
+        if (Array.isArray(liveOrders)) {
+          const mappedOrders = liveOrders.map(o => ({
+            ...o,
+            id: o.orderNumber || o._id,
+            _id: o._id,
+            orderNumber: o.orderNumber,
+            customerName: o.customerInfo?.name || 'Customer',
+            customerEmail: o.customerInfo?.email || '',
+            customerPhone: o.customerInfo?.phone || '',
+            totalAmount: o.totalAmount || 0,
+            orderStatus: o.orderStatus || 'Pending',
+            paymentStatus: o.paymentStatus || 'Pending',
+            shippingAddress: o.shippingAddress || {},
+            items: o.items || [],
+            tracking: o.tracking || { carrier: '', trackingNumber: '', trackingUrl: '' },
+            notes: o.notes || '',
+            createdAt: o.createdAt,
+          }));
+          setState(prev => ({
+            ...prev,
+            orders: mappedOrders
+          }));
+        }
+      })
+      .catch(e => console.warn('Could not load live backend orders:', e.message));
+
+    // Load live customer inquiries from backend API
+    apiClient.get('/admin/inquiries')
+      .then(res => {
+        const liveInquiries = res.data?.inquiries || [];
+        if (Array.isArray(liveInquiries)) {
+          setState(prev => ({
+            ...prev,
+            inquiries: liveInquiries.map(inq => ({
+              ...inq,
+              id: inq._id || inq.id,
+              _id: inq._id || inq.id,
+            }))
+          }));
+        }
+      })
+      .catch(e => console.warn('Could not load live backend inquiries:', e.message));
   }, []);
 
   const addProduct = async (productData) => {
@@ -490,27 +539,91 @@ export const AdminProvider = ({ children }) => {
   };
 
   // Orders
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     setState(prev => ({
       ...prev,
       orders: prev.orders.map(order =>
-        order.id === orderId ? { ...order, orderStatus: newStatus } : order
+        (order.id === orderId || order._id === orderId) ? { ...order, orderStatus: newStatus } : order
       )
     }));
     showToast(`Order ${orderId} marked as ${newStatus}.`);
+
+    try {
+      const target = state.orders.find(o => o.id === orderId || o._id === orderId);
+      const targetId = target?._id || orderId;
+      await apiClient.patch(`/admin/orders/${targetId}/status`, { status: newStatus });
+    } catch (err) {
+      console.warn('Backend order status update note:', err?.message);
+    }
   };
 
-  const updateOrderTracking = (orderId, trackingData) => {
+  const updateOrderTracking = async (orderId, trackingData) => {
     setState(prev => ({
       ...prev,
       orders: prev.orders.map(order =>
-        order.id === orderId ? {
+        (order.id === orderId || order._id === orderId) ? {
           ...order,
-          tracking: { ...order.tracking, ...trackingData }
+          tracking: { ...order.tracking, ...trackingData },
+          orderStatus: (order.orderStatus === 'Pending' || order.orderStatus === 'Processing') ? 'Shipped' : order.orderStatus
         } : order
       )
     }));
     showToast(`Tracking updated for Order ${orderId}.`);
+
+    try {
+      const target = state.orders.find(o => o.id === orderId || o._id === orderId);
+      const targetId = target?._id || orderId;
+      await apiClient.patch(`/admin/orders/${targetId}/tracking`, trackingData);
+    } catch (err) {
+      console.warn('Backend order tracking update note:', err?.message);
+    }
+  };
+
+  const deleteOrder = async (orderId) => {
+    setState(prev => ({
+      ...prev,
+      orders: prev.orders.filter(order => order.id !== orderId && order._id !== orderId)
+    }));
+    showToast(`Order ${orderId} deleted.`);
+
+    try {
+      const target = state.orders.find(o => o.id === orderId || o._id === orderId);
+      const targetId = target?._id || orderId;
+      await apiClient.delete(`/admin/orders/${targetId}`);
+    } catch (err) {
+      console.warn('Backend order deletion note:', err?.message);
+    }
+  };
+
+  // Inquiries
+  const updateInquiryStatus = async (inquiryId, newStatus) => {
+    setState(prev => ({
+      ...prev,
+      inquiries: (prev.inquiries || []).map(inq =>
+        (inq.id === inquiryId || inq._id === inquiryId) ? { ...inq, status: newStatus } : inq
+      )
+    }));
+    showToast(`Inquiry marked as ${newStatus}.`);
+
+    try {
+      await apiClient.patch(`/admin/inquiries/${inquiryId}/status`, { status: newStatus });
+    } catch (err) {
+      console.warn('Backend inquiry status update note:', err?.message);
+    }
+  };
+
+  const deleteInquiry = async (inquiryId) => {
+    setState(prev => ({
+      ...prev,
+      inquiries: (prev.inquiries || []).filter(inq => inq.id !== inquiryId && inq._id !== inquiryId)
+    }));
+    showToast('Customer inquiry deleted.');
+
+    try {
+      await apiClient.delete(`/admin/inquiries/${inquiryId}`);
+    } catch (err) {
+      console.warn('Backend inquiry deletion note:', err?.message);
+    }
   };
 
   // Inventory
@@ -1003,6 +1116,11 @@ export const AdminProvider = ({ children }) => {
         toggleOccasionActive,
         updateOrderStatus,
         updateOrderTracking,
+        deleteOrder,
+        inquiries: state.inquiries || [],
+        unreadInquiriesCount: (state.inquiries || []).filter(i => i.status === 'Unread').length,
+        updateInquiryStatus,
+        deleteInquiry,
         updateProductStock,
         adjustStock,
         addCoupon,

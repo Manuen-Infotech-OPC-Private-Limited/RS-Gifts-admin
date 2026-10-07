@@ -7,14 +7,15 @@ import {
   MapPin,
   Mail,
   Gift,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
 
 export const OrdersModule = () => {
-  const { orders, settings, updateOrderStatus, updateOrderTracking } = useAdmin();
+  const { orders, settings, updateOrderStatus, updateOrderTracking, deleteOrder } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -34,28 +35,42 @@ export const OrdersModule = () => {
   const handleSaveTracking = (e) => {
     e.preventDefault();
     if (!selectedOrder) return;
-    updateOrderTracking(selectedOrder.id, {
+    const targetId = selectedOrder._id || selectedOrder.id;
+    updateOrderTracking(targetId, {
       carrier,
       trackingNumber,
       trackingUrl
     });
     setSelectedOrder({
       ...selectedOrder,
-      tracking: { carrier, trackingNumber, trackingUrl }
+      tracking: { carrier, trackingNumber, trackingUrl },
+      orderStatus: (selectedOrder.orderStatus === 'Pending' || selectedOrder.orderStatus === 'Processing') ? 'Shipped' : selectedOrder.orderStatus
     });
   };
 
   const handleStatusChange = (newStatus) => {
     if (!selectedOrder) return;
-    updateOrderStatus(selectedOrder.id, newStatus);
+    const targetId = selectedOrder._id || selectedOrder.id;
+    updateOrderStatus(targetId, newStatus);
     setSelectedOrder({ ...selectedOrder, orderStatus: newStatus });
   };
 
+  const handleDeleteOrder = (orderId) => {
+    if (window.confirm(`Are you sure you want to delete order #${orderId}?`)) {
+      deleteOrder(orderId);
+      if (selectedOrder && (selectedOrder.id === orderId || selectedOrder._id === orderId)) {
+        setSelectedOrder(null);
+      }
+    }
+  };
+
   const filteredOrders = orders.filter((o) => {
+    const term = searchTerm.toLowerCase();
     const matchesSearch =
-      o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+      (o.id || o._id || o.orderNumber || '').toLowerCase().includes(term) ||
+      (o.customerName || o.customerInfo?.name || '').toLowerCase().includes(term) ||
+      (o.customerEmail || o.customerInfo?.email || '').toLowerCase().includes(term) ||
+      (o.customerPhone || o.customerInfo?.phone || '').toLowerCase().includes(term);
     const matchesStatus = statusFilter === 'ALL' || o.orderStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -264,12 +279,25 @@ export const OrdersModule = () => {
                   <MapPin className="w-3.5 h-3.5 text-primary" />
                   Delivery Destination
                 </h4>
-                <p className="text-xs text-charcoal leading-relaxed">
-                  {selectedOrder.shippingAddress}
+                <p className="text-xs text-charcoal leading-relaxed font-medium">
+                  {typeof selectedOrder.shippingAddress === 'string'
+                    ? selectedOrder.shippingAddress
+                    : selectedOrder.shippingAddress
+                      ? [
+                          selectedOrder.shippingAddress.addressLine1,
+                          selectedOrder.shippingAddress.addressLine2,
+                          `${selectedOrder.shippingAddress.city || ''}${selectedOrder.shippingAddress.state ? ', ' + selectedOrder.shippingAddress.state : ''} ${selectedOrder.shippingAddress.postalCode ? '- ' + selectedOrder.shippingAddress.postalCode : ''}`,
+                        ].filter(Boolean).join(', ')
+                      : 'Standard Shipping Address'}
                 </p>
                 <p className="text-xs text-soft-gray">
-                  Payment: <span className="font-semibold text-charcoal">{selectedOrder.paymentMethod}</span> ({selectedOrder.paymentStatus})
+                  Payment: <span className="font-semibold text-charcoal">{selectedOrder.paymentMethod || 'COD'}</span> ({selectedOrder.paymentStatus || 'Pending'})
                 </p>
+                {selectedOrder.notes && (
+                  <p className="text-xs text-primary bg-primary/5 p-2 rounded-lg font-medium">
+                    Note: {selectedOrder.notes}
+                  </p>
+                )}
               </div>
             </div>
 

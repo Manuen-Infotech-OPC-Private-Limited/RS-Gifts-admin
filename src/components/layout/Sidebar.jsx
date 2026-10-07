@@ -10,6 +10,7 @@ import {
   Percent,
   LayoutTemplate,
   Star,
+  MessageSquare,
   Settings,
   X,
   Camera,
@@ -19,7 +20,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { uploadToCloudinary, validateImageFile } from '../../services/cloudinary';
 
 export const Sidebar = ({ isOpen, onClose }) => {
-  const { products, orders, settings, updateSettings, showToast } = useAdmin();
+  const { products, orders, unreadInquiriesCount, settings, updateSettings, showToast } = useAdmin();
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -89,6 +90,13 @@ export const Sidebar = ({ isOpen, onClose }) => {
     { path: '/coupons', label: 'Coupons & Offers', icon: Percent },
     { path: '/content', label: 'Website Content', icon: LayoutTemplate },
     { path: '/reviews', label: 'Reviews', icon: Star },
+    { 
+      path: '/inquiries', 
+      label: 'Inquiries', 
+      icon: MessageSquare, 
+      badge: unreadInquiriesCount > 0 ? `${unreadInquiriesCount} New` : null,
+      badgeVariant: 'primary' 
+    },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 

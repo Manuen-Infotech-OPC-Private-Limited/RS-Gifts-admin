@@ -10,6 +10,7 @@ import { CustomersModule } from './components/modules/CustomersModule';
 import { CouponsModule } from './components/modules/CouponsModule';
 import { WebsiteContent } from './components/modules/WebsiteContent';
 import { ReviewsModule } from './components/modules/ReviewsModule';
+import { InquiriesModule } from './components/modules/InquiriesModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -39,6 +40,7 @@ export function App() {
         <Route path="coupons" element={<CouponsModule />} />
         <Route path="content" element={<WebsiteContent />} />
         <Route path="reviews" element={<ReviewsModule />} />
+        <Route path="inquiries" element={<InquiriesModule />} />
         <Route path="settings" element={<SettingsModule />} />
       </Route>
 
