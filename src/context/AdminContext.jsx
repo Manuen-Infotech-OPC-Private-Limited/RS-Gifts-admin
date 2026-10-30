@@ -53,7 +53,9 @@ export const AdminProvider = ({ children }) => {
         return {
           ...parsed,
           products: cleanedProducts,
-          categories: (parsed.categories && parsed.categories.length > 0) ? parsed.categories : initialCategories,
+          categories: ((parsed.categories && parsed.categories.length > 0) ? parsed.categories : initialCategories).filter(
+            c => !['home-decor', 'home-and-decor'].includes((c.slug || '').toLowerCase()) && !(c.name || '').toLowerCase().includes('home')
+          ),
           coupons: filteredCoupons,
           reviews: cleanedReviews,
           orders: cleanedOrders,
@@ -146,6 +148,58 @@ export const AdminProvider = ({ children }) => {
     };
 
     loadProducts();
+
+    const loadCategories = async () => {
+      try {
+        const res = await apiClient.get('/admin/categories');
+        const live = res.data?.categories || [];
+        if (live.length > 0) {
+          setState(prev => {
+            const catMap = new Map();
+            live.forEach(c => {
+              const obj = { ...c, id: c._id || c.id, _id: c._id || c.id };
+              catMap.set(c.slug || c.name, obj);
+            });
+            (prev.categories || []).forEach(c => {
+              const key = c.slug || c.name;
+              if (!catMap.has(key)) {
+                catMap.set(key, c);
+              } else if (!catMap.get(key).image && c.image) {
+                catMap.get(key).image = c.image;
+              }
+            });
+            return {
+              ...prev,
+              categories: Array.from(catMap.values()).filter(
+                c => !['home-decor', 'home-and-decor'].includes((c.slug || '').toLowerCase()) && !(c.name || '').toLowerCase().includes('home')
+              )
+            };
+          });
+          return;
+        }
+      } catch {
+        try {
+          const res = await apiClient.get('/customer/categories');
+          const live = res.data?.categories || [];
+          if (live.length > 0) {
+            setState(prev => ({
+              ...prev,
+              categories: live
+                .filter(c => !['home-decor', 'home-and-decor'].includes((c.slug || '').toLowerCase()) && !(c.name || '').toLowerCase().includes('home'))
+                .map(c => ({
+                  ...c,
+                  id: c._id || c.id,
+                  _id: c._id || c.id,
+                }))
+            }));
+          }
+        } catch {
+          // offline
+        }
+      }
+    };
+
+    loadCategories();
 
     apiClient.get('/admin/content/banners')
       .then(res => {
@@ -471,10 +525,12 @@ export const AdminProvider = ({ children }) => {
   };
 
   // Categories & Occasions
-  const addCategory = (categoryData) => {
+  const addCategory = async (categoryData) => {
+    const tempId = 'cat-' + Date.now();
     const newCategory = {
       ...categoryData,
-      id: 'cat-' + Date.now(),
+      id: tempId,
+      _id: tempId,
       slug: categoryData.slug || categoryData.name.toLowerCase().replace(/\s+/g, '-'),
       active: true,
       itemCount: 0
@@ -483,30 +539,107 @@ export const AdminProvider = ({ children }) => {
       ...prev,
       categories: [...prev.categories, newCategory]
     }));
-    showToast(`Category "${newCategory.name}" added!`);
+
+    try {
+      const res = await apiClient.post('/admin/categories', categoryData);
+      const created = res.data?.category;
+      if (created) {
+        const finalCategory = {
+          ...created,
+          id: created._id || created.id,
+          _id: created._id || created.id,
+        };
+        setState(prev => ({
+          ...prev,
+          categories: prev.categories.map(c => (c.id === tempId ? finalCategory : c))
+        }));
+        showToast(res.data?.message || `Category "${finalCategory.name}" added!`);
+        return finalCategory;
+      }
+    } catch (err) {
+      console.warn('Backend addCategory error:', err);
+      showToast(err.response?.data?.message || 'Category added locally', 'warning');
+      return newCategory;
+    }
   };
 
-  const updateCategory = (id, updatedFields) => {
+  const updateCategory = async (id, updatedFields) => {
     setState(prev => ({
       ...prev,
-      categories: prev.categories.map(c => c.id === id ? { ...c, ...updatedFields } : c)
+      categories: prev.categories.map(c => (c.id === id || c._id === id || c.slug === id) ? { ...c, ...updatedFields } : c)
     }));
-    showToast('Category updated.');
+
+    try {
+      const currentCat = state.categories.find(c => c.id === id || c._id === id || c.slug === id);
+      const targetId = (currentCat?._id && !String(currentCat._id).startsWith('cat-'))
+        ? currentCat._id
+        : (id && !String(id).startsWith('cat-') ? id : (currentCat?.slug || currentCat?.name || id));
+
+      const payload = {
+        name: updatedFields.name !== undefined ? updatedFields.name : currentCat?.name,
+        slug: updatedFields.slug !== undefined ? updatedFields.slug : currentCat?.slug,
+        description: updatedFields.description !== undefined ? updatedFields.description : currentCat?.description,
+        image: updatedFields.image !== undefined ? updatedFields.image : currentCat?.image,
+        active: updatedFields.active !== undefined ? updatedFields.active : currentCat?.active,
+      };
+
+      const res = await apiClient.put(`/admin/categories/${targetId}`, payload);
+      const updated = res.data?.category;
+      if (updated) {
+        const finalCat = { ...updated, id: updated._id || updated.id, _id: updated._id || updated.id };
+        setState(prev => ({
+          ...prev,
+          categories: prev.categories.map(c => (c.id === id || c._id === id || c.slug === id) ? finalCat : c)
+        }));
+      }
+      showToast('Category updated successfully!');
+    } catch (err) {
+      console.warn('Backend updateCategory error:', err);
+      showToast(err.response?.data?.message || 'Category updated locally', 'warning');
+    }
   };
 
-  const deleteCategory = (id) => {
+  const deleteCategory = async (id) => {
     setState(prev => ({
       ...prev,
-      categories: prev.categories.filter(c => c.id !== id)
+      categories: prev.categories.filter(c => c.id !== id && c._id !== id && c.slug !== id)
     }));
-    showToast('Category deleted.', 'error');
+
+    try {
+      const currentCat = state.categories.find(c => c.id === id || c._id === id || c.slug === id);
+      const targetId = (currentCat?._id && !String(currentCat._id).startsWith('cat-'))
+        ? currentCat._id
+        : (id && !String(id).startsWith('cat-') ? id : (currentCat?.slug || currentCat?.name || id));
+
+      await apiClient.delete(`/admin/categories/${targetId}`);
+      showToast('Category deleted.', 'error');
+    } catch (err) {
+      console.warn('Backend deleteCategory error:', err);
+      showToast(err.response?.data?.message || 'Category deleted locally', 'warning');
+    }
   };
 
-  const toggleCategoryActive = (id) => {
+  const toggleCategoryActive = async (id) => {
     setState(prev => ({
       ...prev,
-      categories: prev.categories.map(c => c.id === id ? { ...c, active: !c.active } : c)
+      categories: prev.categories.map(c => {
+        if (c.id === id || c._id === id || c.slug === id) {
+          return { ...c, active: !c.active };
+        }
+        return c;
+      })
     }));
+
+    try {
+      const currentCat = state.categories.find(c => c.id === id || c._id === id || c.slug === id);
+      const targetId = (currentCat?._id && !String(currentCat._id).startsWith('cat-'))
+        ? currentCat._id
+        : (id && !String(id).startsWith('cat-') ? id : (currentCat?.slug || currentCat?.name || id));
+
+      await apiClient.patch(`/admin/categories/${targetId}/toggle-active`);
+    } catch (err) {
+      console.warn('Backend toggleCategoryActive error:', err);
+    }
   };
 
   const addOccasion = (occasionData) => {

@@ -556,11 +556,13 @@ export const ProductsModule = () => {
             value={formData.image}
             onChange={(url) => setFormData({ ...formData, image: url })}
             label="Product Gift Image"
+            recommendedDimensions="800 × 800 px"
+            aspectRatio="1:1 (square)"
           />
-          {errors.image && <p className="text-xs text-error -mt-4">{errors.image}</p>}
+          {errors.image && <p className="text-xs text-error mt-1">{errors.image}</p>}
 
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-soft-gray/15">
+          <div className="flex items-center justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}

@@ -53,10 +53,10 @@ export const Header = ({ onOpenSidebar }) => {
                 className="fixed inset-0 z-30" 
                 onClick={() => setShowNotifications(false)} 
               />
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-surface border border-soft-gray/20 shadow-modal z-40 p-4 animate-slide-up">
+              <div className="fixed inset-x-3 top-20 mt-2 max-w-md mx-auto sm:inset-x-auto sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-none sm:mx-0 rounded-2xl bg-surface border border-soft-gray/20 shadow-modal z-40 p-4 animate-slide-up">
                 <div className="flex items-center justify-between pb-3 border-b border-soft-gray/15">
                   <h4 className="text-sm font-bold text-charcoal">Activity & Alerts</h4>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/30 text-charcoal font-semibold">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary/30 text-charcoal font-semibold shrink-0">
                     {totalNotifications} Alerts
                   </span>
                 </div>

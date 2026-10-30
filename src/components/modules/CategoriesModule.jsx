@@ -60,7 +60,7 @@ export const CategoriesModule = () => {
     };
 
     if (editingCategory) {
-      updateCategory(editingCategory.id, finalForm);
+      updateCategory(editingCategory._id || editingCategory.id, finalForm);
     } else {
       addCategory(finalForm);
     }
@@ -113,16 +113,16 @@ export const CategoriesModule = () => {
             const itemCount = products.filter((p) => p.category === cat.name).length;
             return (
               <div
-                key={cat.id}
+                key={cat._id || cat.id}
                 className="bg-surface rounded-2xl border border-soft-gray/20 shadow-card overflow-hidden flex flex-col justify-between hover:shadow-card-hover transition-all"
               >
                 <div>
-                  <div className="h-36 relative bg-warm-ivory">
+                  <div className="h-40 relative bg-[#FAF7F5] p-2 flex items-center justify-center">
                     {cat.image ? (
                       <img
                         src={cat.image}
                         alt={cat.name}
-                        className="w-full h-full object-cover"
+                        className="max-h-full max-w-full object-contain"
                         onError={(e) => {
                           e.target.onerror = null;
                           e.target.style.display = 'none';
@@ -140,7 +140,7 @@ export const CategoriesModule = () => {
                     </div>
                     <div className="absolute top-3 right-3">
                       <button
-                        onClick={() => toggleCategoryActive(cat.id)}
+                        onClick={() => toggleCategoryActive(cat._id || cat.id)}
                         className={`text-xs px-2.5 py-1 rounded-full font-semibold shadow-sm border ${cat.active
                             ? 'bg-surface text-success border-success/30'
                             : 'bg-surface text-soft-gray border-soft-gray/30'
@@ -173,7 +173,7 @@ export const CategoriesModule = () => {
                     </button>
                     <button
                       onClick={() =>
-                        setDeleteTarget({ id: cat.id, name: cat.name })
+                        setDeleteTarget({ id: cat._id || cat.id, name: cat.name })
                       }
                       className="p-1.5 rounded-lg text-soft-gray hover:text-primary hover:bg-primary/10 transition-colors"
                       title="Delete Category"
@@ -192,6 +192,7 @@ export const CategoriesModule = () => {
         isOpen={isCatModalOpen}
         onClose={() => setIsCatModalOpen(false)}
         title={editingCategory ? 'Edit Gift Category' : 'Create New Category'}
+        maxWidth="max-w-3xl"
       >
         <form onSubmit={handleCatSubmit} className="space-y-4">
           <div>
@@ -236,7 +237,7 @@ export const CategoriesModule = () => {
             label="Category Banner Image"
           />
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-soft-gray/15">
+          <div className="flex items-center justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={() => setIsCatModalOpen(false)}

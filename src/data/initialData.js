@@ -17,17 +17,10 @@ export const initialCategories = [
     active: true,
     image: ''
   },
-  {
-    id: 'cat-3',
-    name: 'Home and Decor',
-    slug: 'home-and-decor',
-    description: 'Aesthetic lighting, decorative art, clocks, and home styling',
-    active: true,
-    image: ''
-  },
+
   {
     id: 'cat-4',
-    name: 'Toys and Kids',
+    name: 'Toys for Kids',
     slug: 'toys-and-kids',
     description: 'Creative toys, board games, learning gifts, and fun surprises for kids',
     active: true,
