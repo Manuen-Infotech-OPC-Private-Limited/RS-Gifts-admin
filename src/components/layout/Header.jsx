@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { Menu, Bell, Search, User, Gift, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export const Header = ({ onOpenSidebar }) => {
+  const navigate = useNavigate();
   const { settings, orders, products } = useAdmin();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const pendingOrders = orders.filter(o => o.orderStatus === 'Pending');
   const lowStockItems = products.filter(p => p.stock <= (p.lowStockThreshold || 5));
   const totalNotifications = pendingOrders.length + lowStockItems.length;
+
+  const handleLogout = () => {
+    localStorage.removeItem('rs_admin_token');
+    localStorage.removeItem('rs_admin_user');
+    navigate('/login', { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 h-20 bg-surface border-b border-soft-gray/20 px-4 sm:px-8 flex items-center justify-between shadow-sm">
@@ -127,13 +134,7 @@ export const Header = ({ onOpenSidebar }) => {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              localStorage.removeItem('rs_admin_token');
-              localStorage.removeItem('rs_admin_user');
-              localStorage.removeItem('rs_gifts_token');
-              localStorage.removeItem('rs_gifts_user');
-              window.location.href = 'http://localhost:5173/';
-            }}
+            onClick={handleLogout}
             className="p-2 px-3 rounded-xl text-soft-gray hover:text-error hover:bg-error/10 border border-soft-gray/20 transition-colors text-xs font-semibold cursor-pointer"
             title="Sign out of admin"
           >
@@ -144,3 +145,5 @@ export const Header = ({ onOpenSidebar }) => {
     </header>
   );
 };
+
+export default Header;

@@ -19,7 +19,7 @@ export const SettingsModule = () => {
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold text-charcoal tracking-tight">Store & Admin Settings</h1>
+        <h1 className="text-2xl font-bold text-charcoal tracking-tight">Settings</h1>
         <p className="text-sm text-soft-gray mt-1">
           Configure RS Gifts store identity, contact details, and address.
         </p>
@@ -32,8 +32,8 @@ export const SettingsModule = () => {
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-charcoal">Store Logo & Branding</h3>
-              <p className="text-xs text-soft-gray">Store logo shown on receipts and website header</p>
+              <h3 className="text-base font-bold text-charcoal">Add Logo</h3>
+              <p className="text-xs text-soft-gray">Logo visible on leftside of website </p>
             </div>
           </div>
 
@@ -52,7 +52,7 @@ export const SettingsModule = () => {
             className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm"
           >
             <Save className="w-4 h-4" />
-            Save Store Settings
+            Save
           </button>
         </div>
       </form>

@@ -301,7 +301,7 @@ export const AdminProvider = ({ children }) => {
     apiClient.get('/admin/reviews')
       .then(res => {
         const liveReviews = res.data?.reviews || [];
-        if (liveReviews.length > 0) {
+        if (Array.isArray(liveReviews)) {
           setState(prev => {
             const mapped = liveReviews.map(r => {
               let cName = (r.customerName || '').trim();
@@ -325,7 +325,7 @@ export const AdminProvider = ({ children }) => {
             const retained = (prev.reviews || []).filter(lr => !liveIds.has(lr.id) && !liveIds.has(lr._id));
             return {
               ...prev,
-              reviews: [...mapped, ...retained]
+              reviews: mapped
             };
           });
         }
@@ -1158,7 +1158,7 @@ export const AdminProvider = ({ children }) => {
       reviews: prev.reviews.map(r => (r.id === id || r._id === id) ? { ...r, status: 'approved' } : r)
     }));
     try {
-      await apiClient.patch(`/admin/reviews/${id}/toggle-approve`);
+      await apiClient.patch(`/admin/reviews/${id}/toggle-approve`, { isApproved: true });
     } catch (err) {
       console.warn('Backend approve sync note:', err.message);
     }
@@ -1171,7 +1171,7 @@ export const AdminProvider = ({ children }) => {
       reviews: prev.reviews.map(r => (r.id === id || r._id === id) ? { ...r, status: 'hidden' } : r)
     }));
     try {
-      await apiClient.patch(`/admin/reviews/${id}/toggle-approve`);
+      await apiClient.patch(`/admin/reviews/${id}/toggle-approve`, { isApproved: false });
     } catch (err) {
       console.warn('Backend hide sync note:', err.message);
     }
