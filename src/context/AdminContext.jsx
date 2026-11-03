@@ -502,6 +502,8 @@ export const AdminProvider = ({ children }) => {
       productId: rawId,
       sku: rawId,
     };
+    delete cleanFields._id;
+    delete cleanFields.id;
 
     setState(prev => ({
       ...prev,
