@@ -14,12 +14,13 @@ import { useAdmin } from '../../context/AdminContext';
 export const CloudinaryUpload = ({
   value,
   onChange,
-  label = 'Category Banner Image',
+  label = '',
   hint = '',
   recommendedDimensions = '1200 × 600 px',
   preferredSize,
   aspectRatio = '2:1 (landscape)',
   maxSizeMB = 5,
+  children,
 }) => {
   const { settings } = useAdmin();
   const fileInputRef = useRef(null);
@@ -231,7 +232,6 @@ export const CloudinaryUpload = ({
                     type="url"
                     value={urlDraft}
                     onChange={(e) => setUrlDraft(e.target.value)}
-                    placeholder="https://res.cloudinary.com/..."
                     className="w-full px-3 py-2 text-xs rounded-lg border border-neutral-300 bg-white text-neutral-800 focus:outline-none focus:border-[#821D38] focus:ring-1 focus:ring-[#821D38]"
                     autoFocus
                   />
@@ -291,6 +291,11 @@ export const CloudinaryUpload = ({
                   <span>Aspect ratio: {aspectRatio}</span>
                 </li>
               </ul>
+              {children && (
+                <div className="pt-3">
+                  {children}
+                </div>
+              )}
             </div>
           </div>
         </div>

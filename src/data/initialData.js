@@ -104,6 +104,10 @@ export const initialSettings = {
   cloudinaryCloudName: '',
   cloudinaryUploadPreset: '',
   adminName: '',
-  adminEmail: ''
+  adminEmail: '',
+  facebookUrl: '',
+  instagramUrl: '',
+  youtubeUrl: '',
+  pinterestUrl: ''
 };
 

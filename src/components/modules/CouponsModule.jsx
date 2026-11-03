@@ -1,14 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, 
   Edit2, 
   Trash2, 
-  Calendar, 
   Tag, 
   Search, 
   Check, 
   Copy,
-  UserCheck
+  UserCheck,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Modal } from '../common/Modal';
@@ -144,25 +145,75 @@ export const CouponsModule = () => {
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState({});
 
+  // Dynamic helpers for easy-to-understand coupon validity & expiry
+  const getDefaultExpiryDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split('T')[0];
+  };
+
+  const toInputDate = (dateVal) => {
+    if (!dateVal) return getDefaultExpiryDate();
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return getDefaultExpiryDate();
+      return d.toISOString().split('T')[0];
+    } catch {
+      return getDefaultExpiryDate();
+    }
+  };
+
   // Dynamic helper: check expiry status against current local date
   const getExpiryInfo = (expiryDate) => {
-    if (!expiryDate) return { isExpired: false, label: 'No Expiry', daysLeft: null };
+    if (!expiryDate) {
+      return { 
+        isExpired: false, 
+        label: 'Lifetime Validity', 
+        daysLeft: null, 
+        formattedDate: 'No Expiry' 
+      };
+    }
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const exp = new Date(expiryDate);
+    if (isNaN(exp.getTime())) {
+      return { 
+        isExpired: false, 
+        label: 'Active', 
+        daysLeft: null, 
+        formattedDate: String(expiryDate) 
+      };
+    }
     exp.setHours(0, 0, 0, 0);
     const diffDays = Math.round((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 0) return { isExpired: true, label: 'Expired', daysLeft: diffDays };
-    if (diffDays === 0) return { isExpired: false, label: 'Expires Today', daysLeft: 0 };
-    if (diffDays === 1) return { isExpired: false, label: 'Expires Tomorrow', daysLeft: 1 };
-    return { isExpired: false, label: `${diffDays} days left`, daysLeft: diffDays };
+    const formattedDate = exp.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    if (diffDays < 0) {
+      const daysAgo = Math.abs(diffDays);
+      return {
+        isExpired: true,
+        label: `Expired (${daysAgo === 1 ? 'yesterday' : `${daysAgo}d ago`})`,
+        daysLeft: diffDays,
+        formattedDate
+      };
+    }
+    if (diffDays === 0) return { isExpired: false, label: 'Expires Today', daysLeft: 0, formattedDate };
+    if (diffDays === 1) return { isExpired: false, label: 'Expires Tomorrow', daysLeft: 1, formattedDate };
+    return { isExpired: false, label: `${diffDays} days left`, daysLeft: diffDays, formattedDate };
   };
 
   // Open Add Modal
   const handleOpenAdd = () => {
     setEditingCoupon(null);
-    setFormData(initialForm);
+    setFormData({
+      ...initialForm,
+      expiryDate: getDefaultExpiryDate()
+    });
     setErrors({});
     setIsModalOpen(true);
   };
@@ -177,7 +228,7 @@ export const CouponsModule = () => {
       maxDiscount: coupon.maxDiscount ? coupon.maxDiscount.toString() : '',
       minSpend: coupon.minSpend ? coupon.minSpend.toString() : '',
       categoryRestriction: coupon.categoryRestriction || 'All',
-      expiryDate: coupon.expiryDate || '',
+      expiryDate: toInputDate(coupon.expiryDate),
       usageLimit: coupon.usageLimit || 100,
       perUserLimit: 1,
       oneTimePerUser: true,
@@ -265,6 +316,20 @@ export const CouponsModule = () => {
       return matchSearch;
     });
   }, [coupons, searchTerm, statusFilter]);
+
+  // Pagination (fixed 7 items per page, scrollable)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const totalPages = Math.ceil(filteredCoupons.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCoupons = useMemo(() => {
+    return filteredCoupons.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCoupons, startIndex, itemsPerPage]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -361,21 +426,21 @@ export const CouponsModule = () => {
 
       {/* Main Coupons Table */}
       <div className="bg-surface rounded-2xl border border-soft-gray/20 shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-charcoal">
-            <thead className="bg-warm-ivory/60 text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15">
+        <div className="overflow-x-auto overflow-y-auto max-h-[460px] no-scrollbar">
+          <table className="w-full text-left text-sm text-charcoal relative border-collapse">
+            <thead className="sticky top-0 z-20 bg-warm-ivory text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15 shadow-xs">
               <tr>
-                <th className="px-6 py-3.5">Promo Code</th>
-                <th className="px-6 py-3.5">Discount Offer</th>
-                <th className="px-6 py-3.5">Usage Restrictions</th>
-                <th className="px-6 py-3.5">Validity / Expiry</th>
-                <th className="px-6 py-3.5">Redemptions</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Promo Code</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Discount Offer</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Usage Restrictions</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Validity / Expiry</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Redemptions</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Status</th>
+                <th className="px-6 py-3.5 text-right bg-warm-ivory">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-soft-gray/10">
-              {filteredCoupons.map((coupon) => {
+              {paginatedCoupons.map((coupon) => {
                 const expInfo = getExpiryInfo(coupon.expiryDate);
                 const isMaxedOut = coupon.usageLimit > 0 && (coupon.usageCount || 0) >= coupon.usageLimit;
 
@@ -439,23 +504,9 @@ export const CouponsModule = () => {
                       </div>
                     </td>
 
-                    {/* Expiry */}
-                    <td className="px-6 py-4 text-xs">
-                      <div className="flex items-center gap-1.5 font-medium text-charcoal">
-                        <Calendar className="w-3.5 h-3.5 text-primary" />
-                        {coupon.expiryDate || 'No date'}
-                      </div>
-                      <span
-                        className={`inline-block mt-1 text-[11px] font-semibold ${
-                          expInfo.isExpired
-                            ? 'text-error'
-                            : expInfo.daysLeft !== null && expInfo.daysLeft <= 3
-                            ? 'text-accent'
-                            : 'text-soft-gray'
-                        }`}
-                      >
-                        {expInfo.label}
-                      </span>
+                    {/* Validity / Expiry - Plain Date Only */}
+                    <td className="px-6 py-4 text-xs font-semibold text-charcoal whitespace-nowrap">
+                      {expInfo.formattedDate}
                     </td>
 
                     {/* Usage Progress */}
@@ -544,6 +595,57 @@ export const CouponsModule = () => {
             </tbody>
           </table>
         </div>
+        {/* Pagination Controls (7 coupons per page) */}
+        {filteredCoupons.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3.5 border-t border-soft-gray/15 bg-warm-ivory/30 gap-3">
+            <div className="text-xs text-soft-gray font-medium">
+              Showing <span className="font-semibold text-charcoal">{startIndex + 1}</span> to{' '}
+              <span className="font-semibold text-charcoal">
+                {Math.min(startIndex + itemsPerPage, filteredCoupons.length)}
+              </span>{' '}
+              of <span className="font-semibold text-charcoal">{filteredCoupons.length}</span> coupons
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all ${
+                      currentPage === pageNum
+                        ? 'bg-primary text-surface shadow-xs'
+                        : 'text-charcoal hover:bg-warm-ivory/80 border border-soft-gray/20'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title="Next Page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Create / Edit Modal */}
@@ -679,11 +781,16 @@ export const CouponsModule = () => {
             </select>
           </div>
 
-          {/* Expiry Date */}
+          {/* Validity / Expiry Date */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              Expiry Date
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal">
+                Validity / Expiry Date
+              </label>
+              <span className="text-[11px] text-soft-gray font-medium">
+                {formData.expiryDate ? getExpiryInfo(formData.expiryDate).formattedDate : 'Select date'}
+              </span>
+            </div>
             <input
               type="date"
               min={todayStr}
@@ -693,8 +800,16 @@ export const CouponsModule = () => {
                 errors.expiryDate ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
               }`}
             />
-            {errors.expiryDate && (
+            {errors.expiryDate ? (
               <p className="text-xs text-error mt-1">{errors.expiryDate}</p>
+            ) : formData.expiryDate ? (
+              <p className="text-[11px] text-emerald-600 mt-1 font-medium">
+                ✓ Valid until {getExpiryInfo(formData.expiryDate).formattedDate} ({getExpiryInfo(formData.expiryDate).label})
+              </p>
+            ) : (
+              <p className="text-[11px] text-soft-gray mt-1">
+                Select the expiry date for this coupon.
+              </p>
             )}
           </div>
 
@@ -713,7 +828,7 @@ export const CouponsModule = () => {
           </div>
 
           {/* Modal Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-soft-gray/15">
+          <div className="flex items-center justify-end gap-3 pt-3 pb-2 mt-4">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}

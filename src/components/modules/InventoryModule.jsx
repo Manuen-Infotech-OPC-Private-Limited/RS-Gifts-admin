@@ -9,7 +9,7 @@ import {
   Minus,
   Save
 } from 'lucide-react';
-import { useAdmin } from '../../context/AdminContext';
+import { useAdmin, ensure6DigitProductId } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
 
 export const InventoryModule = () => {
@@ -203,7 +203,7 @@ export const InventoryModule = () => {
 
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center text-xs font-mono font-bold text-primary bg-warm-ivory/80 px-2.5 py-1 rounded-lg border border-soft-gray/20 shadow-xs">
-                        {product.productId || product.sku || (product.id ? String(product.id).slice(-6).toUpperCase() : 'N/A')}
+                        {ensure6DigitProductId(product.productId || product.sku, product.id || product._id)}
                       </span>
                     </td>
 

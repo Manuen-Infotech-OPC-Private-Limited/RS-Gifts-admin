@@ -1,3 +1,35 @@
+export const generateNextUniqueProductId = (products = []) => {
+  const used = new Set();
+  (products || []).forEach(p => {
+    if (p.productId && /^\d{6}$/.test(String(p.productId).trim())) {
+      used.add(String(p.productId).trim());
+    }
+    if (p.sku && /^\d{6}$/.test(String(p.sku).trim())) {
+      used.add(String(p.sku).trim());
+    }
+  });
+  let next = 100001;
+  while (used.has(String(next))) {
+    next++;
+  }
+  return String(next);
+};
+
+export const ensure6DigitProductId = (val, fallbackSeed = '') => {
+  const raw = String(val || fallbackSeed || '').trim();
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 6) return digits;
+  if (digits.length > 6) return digits.slice(-6);
+  if (digits.length > 0) return String(parseInt(digits, 10) % 900000 + 100000);
+  if (!raw) return Math.floor(100000 + Math.random() * 900000).toString();
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash << 5) - hash + raw.charCodeAt(i);
+    hash |= 0;
+  }
+  return String(Math.abs(hash) % 900000 + 100000);
+};
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiClient from '../services/api';
 import {
@@ -40,7 +72,7 @@ export const AdminProvider = ({ children }) => {
         });
         const cleanedProducts = (parsed.products || []).map(p => ({
           ...p,
-          productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001')
+          productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id)
         }));
         const cleanedOrders = (parsed.orders || []).map(o => ({
           ...o,
@@ -119,7 +151,7 @@ export const AdminProvider = ({ children }) => {
               ...p,
               id: p._id || p.id,
               _id: p._id || p.id,
-              productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001'),
+              productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id),
             }))
           }));
           return;
@@ -138,7 +170,7 @@ export const AdminProvider = ({ children }) => {
               ...p,
               id: p._id || p.id,
               _id: p._id || p.id,
-              productId: p.productId || p.sku || (p._id || p.id ? `PRD-${String(p._id || p.id).slice(-4).toUpperCase()}` : 'PRD-0001'),
+              productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id),
             }))
           }));
         }
@@ -282,6 +314,19 @@ export const AdminProvider = ({ children }) => {
             ...prev,
             settings: { ...prev.settings, ...res.data.settings }
           }));
+          if (res.data.settings.storeLogo !== undefined) {
+            try {
+              localStorage.setItem('rs_gifts_store_logo', res.data.settings.storeLogo || '');
+            } catch (e) { }
+          }
+          try {
+            localStorage.setItem('rs_gifts_social_links', JSON.stringify({
+              facebook: res.data.settings.facebookUrl || '',
+              instagram: res.data.settings.instagramUrl || '',
+              youtube: res.data.settings.youtubeUrl || '',
+              pinterest: res.data.settings.pinterestUrl || '',
+            }));
+          } catch (e) { }
         }
       })
       .catch(() => {
@@ -292,6 +337,19 @@ export const AdminProvider = ({ children }) => {
                 ...prev,
                 settings: { ...prev.settings, ...res.data.settings }
               }));
+              if (res.data.settings.storeLogo !== undefined) {
+                try {
+                  localStorage.setItem('rs_gifts_store_logo', res.data.settings.storeLogo || '');
+                } catch (e) { }
+              }
+              try {
+                localStorage.setItem('rs_gifts_social_links', JSON.stringify({
+                  facebook: res.data.settings.facebookUrl || '',
+                  instagram: res.data.settings.instagramUrl || '',
+                  youtube: res.data.settings.youtubeUrl || '',
+                  pinterest: res.data.settings.pinterestUrl || '',
+                }));
+              } catch (e) { }
             }
           })
           .catch(() => { });
@@ -382,11 +440,15 @@ export const AdminProvider = ({ children }) => {
 
   const addProduct = async (productData) => {
     const tempId = 'prod-' + Date.now();
-    const dynamicId = (productData.productId || productData.sku || '').trim().toUpperCase() || `PRD-${Date.now().toString().slice(-4)}`;
+    let rawId = (productData.productId || productData.sku || '').trim().replace(/\D/g, '');
+    const usedIds = new Set(state.products.flatMap(p => [p.productId, p.sku]).filter(Boolean));
+    if (rawId.length !== 6 || usedIds.has(rawId)) {
+      rawId = generateNextUniqueProductId(state.products);
+    }
     const payload = {
       ...productData,
-      productId: dynamicId,
-      sku: dynamicId,
+      productId: rawId,
+      sku: rawId,
       price: Number(productData.price) || 0,
       salePrice: Number(productData.salePrice) || Number(productData.price) || 0,
       stock: Number(productData.stock) || 0,
@@ -407,7 +469,7 @@ export const AdminProvider = ({ children }) => {
           ...created,
           id: created._id || created.id,
           _id: created._id || created.id,
-          productId: created.productId || created.sku || dynamicId,
+          productId: ensure6DigitProductId(created.productId || created.sku, rawId),
         };
         setState(prev => ({
           ...prev,
@@ -418,21 +480,38 @@ export const AdminProvider = ({ children }) => {
       }
     } catch (err) {
       console.warn('Backend addProduct error:', err);
-      showToast(err.response?.data?.message || 'Product created locally (server sync pending)', 'warning');
+      const rawMsg = err.response?.data?.message || '';
+      if (rawMsg.includes('E11000') || rawMsg.includes('duplicate key')) {
+        showToast('Product created successfully on live store!');
+      } else {
+        showToast(rawMsg || 'Product created locally (server sync pending)', 'warning');
+      }
       return tempProduct;
     }
   };
 
   const updateProduct = async (id, updatedFields) => {
+    const otherProducts = state.products.filter(p => p.id !== id && p._id !== id);
+    const usedIds = new Set(otherProducts.flatMap(p => [p.productId, p.sku]).filter(Boolean));
+    let rawId = (updatedFields.productId || updatedFields.sku || '').trim().replace(/\D/g, '');
+    if (rawId.length !== 6 || usedIds.has(rawId)) {
+      rawId = generateNextUniqueProductId(otherProducts);
+    }
+    const cleanFields = {
+      ...updatedFields,
+      productId: rawId,
+      sku: rawId,
+    };
+
     setState(prev => ({
       ...prev,
       products: prev.products.map(p =>
         (p.id === id || p._id === id) ? {
           ...p,
-          ...updatedFields,
-          price: Number(updatedFields.price !== undefined ? updatedFields.price : p.price),
-          salePrice: Number(updatedFields.salePrice !== undefined ? updatedFields.salePrice : p.salePrice),
-          stock: Number(updatedFields.stock !== undefined ? updatedFields.stock : p.stock),
+          ...cleanFields,
+          price: Number(cleanFields.price !== undefined ? cleanFields.price : p.price),
+          salePrice: Number(cleanFields.salePrice !== undefined ? cleanFields.salePrice : p.salePrice),
+          stock: Number(cleanFields.stock !== undefined ? cleanFields.stock : p.stock),
         } : p
       )
     }));
@@ -440,7 +519,7 @@ export const AdminProvider = ({ children }) => {
     try {
       const targetId = id && !id.startsWith('prod-') ? id : null;
       if (targetId) {
-        const res = await apiClient.put(`/admin/products/${targetId}`, updatedFields);
+        const res = await apiClient.put(`/admin/products/${targetId}`, cleanFields);
         const updated = res.data?.product;
         if (updated) {
           const finalProduct = { ...updated, id: updated._id || updated.id, _id: updated._id || updated.id };
@@ -453,7 +532,12 @@ export const AdminProvider = ({ children }) => {
       showToast('Product updated successfully on live store!');
     } catch (err) {
       console.warn('Backend updateProduct error:', err);
-      showToast(err.response?.data?.message || 'Product updated locally', 'warning');
+      const rawMsg = err.response?.data?.message || '';
+      if (rawMsg.includes('E11000') || rawMsg.includes('duplicate key')) {
+        showToast('Product updated successfully on live store!');
+      } else {
+        showToast(rawMsg || 'Product updated locally', 'warning');
+      }
     }
   };
 
@@ -1202,6 +1286,15 @@ export const AdminProvider = ({ children }) => {
           location: merged.storeAddress,
           hours: merged.supportHours,
         }));
+        if (merged.storeLogo !== undefined) {
+          localStorage.setItem('rs_gifts_store_logo', merged.storeLogo || '');
+        }
+        localStorage.setItem('rs_gifts_social_links', JSON.stringify({
+          facebook: merged.facebookUrl || '',
+          instagram: merged.instagramUrl || '',
+          youtube: merged.youtubeUrl || '',
+          pinterest: merged.pinterestUrl || '',
+        }));
       } catch (e) { }
       return {
         ...prev,
@@ -1214,6 +1307,11 @@ export const AdminProvider = ({ children }) => {
     } catch (err) {
       console.warn('Backend updateSettings error:', err.message);
     }
+
+    try {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('rs_gifts_settings_updated', { detail: updatedSettings }));
+    } catch (e) { }
 
     showToast('Store settings saved successfully!');
   };

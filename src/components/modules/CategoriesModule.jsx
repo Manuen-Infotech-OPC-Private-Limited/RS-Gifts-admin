@@ -234,10 +234,13 @@ export const CategoriesModule = () => {
           <CloudinaryUpload
             value={catForm.image}
             onChange={(url) => setCatForm({ ...catForm, image: url })}
-            label="Category Banner Image"
+            label="Category Icon / Image"
+            recommendedDimensions="500 × 500 px (Square)"
+            aspectRatio="1:1 (Square)"
+            hint="Square 1:1 image with clean or transparent background ensures perfect horizontal alignment."
           />
 
-          <div className="flex items-center justify-end gap-3 pt-4">
+          <div className="flex items-center justify-end gap-3 pt-3 pb-2 mt-4">
             <button
               type="button"
               onClick={() => setIsCatModalOpen(false)}

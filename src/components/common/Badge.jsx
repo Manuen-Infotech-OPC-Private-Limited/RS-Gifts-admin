@@ -13,7 +13,7 @@ export const Badge = ({ children, variant = 'primary', className = '' }) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+      className={`inline-flex items-center whitespace-nowrap shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
         variantStyles[variant] || variantStyles.primary
       } ${className}`}
     >

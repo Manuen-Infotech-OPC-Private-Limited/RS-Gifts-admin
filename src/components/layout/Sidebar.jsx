@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -12,43 +12,12 @@ import {
   Star,
   MessageSquare,
   Settings,
-  X,
-  Camera,
-  Loader2
+  X
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { uploadToCloudinary, validateImageFile } from '../../services/cloudinary';
 
 export const Sidebar = ({ isOpen, onClose }) => {
-  const { products, orders, unreadInquiriesCount, settings, updateSettings, showToast } = useAdmin();
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const fileInputRef = useRef(null);
-
-  const cloudName = settings?.cloudinaryCloudName || import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = settings?.cloudinaryUploadPreset || import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-  const handleLogoFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateImageFile(file, 5);
-    if (!validation.valid) {
-      showToast(validation.error, 'error');
-      return;
-    }
-
-    try {
-      setUploadingLogo(true);
-      const result = await uploadToCloudinary(file, cloudName, uploadPreset);
-      updateSettings({ ...settings, storeLogo: result.url });
-      showToast('Store logo uploaded and saved to Cloudinary!');
-    } catch (err) {
-      showToast(err.message || 'Failed to upload logo image', 'error');
-    } finally {
-      setUploadingLogo(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
+  const { products, orders, unreadInquiriesCount, settings } = useAdmin();
 
   // Prevent background scroll and eliminate edge scrollbar when mobile drawer is open
   useEffect(() => {
@@ -115,49 +84,29 @@ export const Sidebar = ({ isOpen, onClose }) => {
         }`}
       >
         <div className="h-20 flex items-center justify-between px-6 border-b border-soft-gray/15 bg-warm-ivory/60">
-          <div className="flex items-center gap-3.5">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={handleLogoFileChange}
-              className="hidden"
-            />
-            <div
-              onClick={() => !uploadingLogo && fileInputRef.current?.click()}
-              className="relative w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary shadow-sm flex-shrink-0 cursor-pointer group overflow-hidden border border-soft-gray/10 hover:shadow-md transition-all"
-              title="Click to upload/change logo (Saves to Cloudinary)"
-            >
-              {uploadingLogo ? (
-                <Loader2 className="w-6 h-6 text-primary animate-spin" />
-              ) : (
-                <>
-                  {settings.storeLogo ? (
-                    <img
-                      src={settings.storeLogo}
-                      alt={settings.storeName || 'RS GIFTS'}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.style.display = 'none';
-                        if (e.target.nextElementSibling) {
-                          e.target.nextElementSibling.style.display = 'flex';
-                        }
-                      }}
-                    />
-                  ) : null}
-                  <div
-                    className={`w-full h-full items-center justify-center text-primary ${
-                      settings.storeLogo ? 'hidden' : 'flex'
-                    }`}
-                  >
-                    <Gift className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="absolute inset-0 bg-charcoal/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-surface">
-                    <Camera className="w-5 h-5 text-surface" />
-                  </div>
-                </>
-              )}
+          <div className="flex items-center gap-3.5 select-none">
+            <div className="w-12 h-12 rounded-2xl bg-transparent flex items-center justify-center text-primary flex-shrink-0 overflow-hidden">
+              {settings.storeLogo ? (
+                <img
+                  src={settings.storeLogo}
+                  alt={settings.storeName || 'RS GIFTS'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                    if (e.target.nextElementSibling) {
+                      e.target.nextElementSibling.style.display = 'flex';
+                    }
+                  }}
+                />
+              ) : null}
+              <div
+                className={`w-full h-full items-center justify-center text-primary ${
+                  settings.storeLogo ? 'hidden' : 'flex'
+                }`}
+              >
+                <Gift className="w-6 h-6 text-primary" />
+              </div>
             </div>
             <span className="font-bold text-lg tracking-tight text-charcoal">
               {settings.storeName || 'RS GIFTS'}

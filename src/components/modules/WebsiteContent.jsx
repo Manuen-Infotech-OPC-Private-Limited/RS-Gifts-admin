@@ -523,7 +523,7 @@ export const WebsiteContent = () => {
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-primary" />
-                    Support Email Address *
+                    Support Email Address
                   </label>
                   <input
                     type="email"
@@ -562,7 +562,7 @@ export const WebsiteContent = () => {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-primary" />
-                  Store Location / Address *
+                  Location / Address
                 </label>
                 <input
                   type="text"
@@ -585,7 +585,7 @@ export const WebsiteContent = () => {
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-primary" />
-                    Customer Support Hours *
+                    Customer Support Hours
                   </label>
                   <input
                     type="text"
@@ -679,7 +679,7 @@ export const WebsiteContent = () => {
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              Headline Title *
+              Headline Title
             </label>
             <input
               type="text"
@@ -801,7 +801,7 @@ export const WebsiteContent = () => {
           />
           {bannerErrors.imageUrl && <p className="text-xs text-error -mt-3">{bannerErrors.imageUrl}</p>}
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-soft-gray/15">
+          <div className="flex items-center justify-end gap-3 pt-3 pb-2 mt-4">
             <button
               type="button"
               onClick={() => setIsBannerModalOpen(false)}

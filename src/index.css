@@ -26,8 +26,8 @@ html, body {
 
 /* Custom Scrollbars strictly using palette */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -35,12 +35,26 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(232, 160, 173, 0.4);
+  background: rgba(168, 63, 91, 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A83F5B;
+  background: rgba(168, 63, 91, 0.4);
+}
+
+/* Hide scrollbars completely on tables and targeted elements */
+.no-scrollbar::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar,
+.no-scrollbar * {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* Completely remove scrollbars on mobile and responsive preview to prevent edge lines */
