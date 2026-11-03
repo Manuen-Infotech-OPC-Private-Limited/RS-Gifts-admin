@@ -12,7 +12,6 @@ import {
   FileText,
   Package,
   Truck,
-  Sparkles,
   X,
   RotateCcw
 } from 'lucide-react';
@@ -431,13 +430,12 @@ export const ProductsModule = () => {
                       </td>
 
                       <td className="py-3 px-4">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                          (product.stock || 0) <= 0
-                            ? 'bg-error/10 text-error'
-                            : (product.stock || 0) <= 5
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${(product.stock || 0) <= 0
+                          ? 'bg-error/10 text-error'
+                          : (product.stock || 0) <= 5
                             ? 'bg-amber-500/10 text-amber-700'
                             : 'bg-success/10 text-success'
-                        }`}>
+                          }`}>
                           {product.stock || 0} in stock
                         </span>
                       </td>
@@ -446,14 +444,12 @@ export const ProductsModule = () => {
                         <button
                           type="button"
                           onClick={() => toggleProductActive(product.id)}
-                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
-                            product.active !== false ? 'bg-primary' : 'bg-soft-gray/30'
-                          }`}
+                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${product.active !== false ? 'bg-primary' : 'bg-soft-gray/30'
+                            }`}
                         >
                           <span
-                            className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${
-                              product.active !== false ? 'left-4.5' : 'left-0.5'
-                            }`}
+                            className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${product.active !== false ? 'left-4.5' : 'left-0.5'
+                              }`}
                           />
                         </button>
                       </td>
@@ -531,11 +527,10 @@ export const ProductsModule = () => {
             <button
               type="button"
               onClick={() => setActiveModalTab('basic')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeModalTab === 'basic'
-                  ? 'bg-primary text-white shadow-xs'
-                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${activeModalTab === 'basic'
+                ? 'bg-primary text-white shadow-xs'
+                : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+                }`}
             >
               <Info className="w-3.5 h-3.5" />
               1. Basic Info
@@ -544,11 +539,10 @@ export const ProductsModule = () => {
             <button
               type="button"
               onClick={() => setActiveModalTab('description')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeModalTab === 'description'
-                  ? 'bg-primary text-white shadow-xs'
-                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${activeModalTab === 'description'
+                ? 'bg-primary text-white shadow-xs'
+                : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+                }`}
             >
               <FileText className="w-3.5 h-3.5" />
               2. Description & Experience
@@ -557,11 +551,10 @@ export const ProductsModule = () => {
             <button
               type="button"
               onClick={() => setActiveModalTab('specs')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeModalTab === 'specs'
-                  ? 'bg-primary text-white shadow-xs'
-                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${activeModalTab === 'specs'
+                ? 'bg-primary text-white shadow-xs'
+                : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+                }`}
             >
               <Package className="w-3.5 h-3.5" />
               3. In The Box & Specs
@@ -570,11 +563,10 @@ export const ProductsModule = () => {
             <button
               type="button"
               onClick={() => setActiveModalTab('shipping')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
-                activeModalTab === 'shipping'
-                  ? 'bg-primary text-white shadow-xs'
-                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
-              }`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${activeModalTab === 'shipping'
+                ? 'bg-primary text-white shadow-xs'
+                : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+                }`}
             >
               <Truck className="w-3.5 h-3.5" />
               4. Shipping & Returns
@@ -587,23 +579,22 @@ export const ProductsModule = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                    Product Title *
+                    Product Title
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g. Personalized Wooden Moon Lamp"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
-                      errors.title ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                    }`}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.title ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                      }`}
                   />
                   {errors.title && <p className="text-xs text-error mt-1">{errors.title}</p>}
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                    Category *
+                    Category
                   </label>
                   <select
                     value={formData.category}
@@ -652,11 +643,10 @@ export const ProductsModule = () => {
                             targetPage: newPages[0] || ''
                           });
                         }}
-                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-primary text-white border-primary shadow-xs'
-                            : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
-                        }`}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${isSelected
+                          ? 'bg-primary text-white border-primary shadow-xs'
+                          : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
+                          }`}
                       >
                         {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
                         {page}
@@ -669,7 +659,7 @@ export const ProductsModule = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                    Selling Price ({settings.currencySymbol || '₹'}) *
+                    Selling Price ({settings.currencySymbol || '₹'})
                   </label>
                   <input
                     type="number"
@@ -678,16 +668,15 @@ export const ProductsModule = () => {
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     placeholder="1199"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
-                      errors.price ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                    }`}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.price ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                      }`}
                   />
                   {errors.price && <p className="text-xs text-error mt-1">{errors.price}</p>}
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                    Inventory Stock Count *
+                    Inventory Stock Count
                   </label>
                   <input
                     type="number"
@@ -696,9 +685,8 @@ export const ProductsModule = () => {
                     value={formData.stock}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                     placeholder="20"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
-                      errors.stock ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                    }`}
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.stock ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                      }`}
                   />
                   {errors.stock && <p className="text-xs text-error mt-1">{errors.stock}</p>}
                 </div>
@@ -707,7 +695,7 @@ export const ProductsModule = () => {
               <CloudinaryUpload
                 value={formData.image}
                 onChange={(url) => setFormData({ ...formData, image: url })}
-                label="Product Gift Image *"
+                label="Product Gift Image"
                 recommendedDimensions="800 × 800 px"
                 aspectRatio="1:1 (square)"
               />
@@ -734,7 +722,6 @@ export const ProductsModule = () => {
               {/* Experience Card Settings */}
               <div className="p-4 rounded-xl bg-warm-ivory/50 border border-soft-gray/25 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
                   <span className="text-xs font-bold uppercase tracking-wider text-charcoal">
                     Brand Experience Card (Customer Details Tab)
                   </span>
@@ -786,11 +773,10 @@ export const ProductsModule = () => {
                             : [...current, occ];
                           setFormData({ ...formData, occasions: updated });
                         }}
-                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-primary text-white border-primary shadow-xs'
-                            : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
-                        }`}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${isSelected
+                          ? 'bg-primary text-white border-primary shadow-xs'
+                          : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
+                          }`}
                       >
                         {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
                         {occ}
