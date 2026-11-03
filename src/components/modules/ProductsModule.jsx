@@ -545,7 +545,7 @@ export const ProductsModule = () => {
                 }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              2. Description & Experience
+              2. Product Description
             </button>
 
             <button
@@ -711,53 +711,21 @@ export const ProductsModule = () => {
                   Product Description
                 </label>
                 <textarea
-                  rows={3}
+                  rows={6}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Detailed description of this unique gift item..."
+                  placeholder="Enter detailed description, key highlights, materials, and gift story for this product..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
                 />
-              </div>
-
-              {/* Experience Card Settings */}
-              <div className="p-4 rounded-xl bg-warm-ivory/50 border border-soft-gray/25 space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-charcoal">
-                    Brand Experience Card (Customer Details Tab)
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-charcoal mb-1">
-                    Experience Box Title
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.experienceTitle}
-                    onChange={(e) => setFormData({ ...formData, experienceTitle: e.target.value })}
-                    placeholder="e.g. The RS Gifts Experience"
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/30 bg-surface text-charcoal"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-charcoal mb-1">
-                    Experience Box Description
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.experienceText}
-                    onChange={(e) => setFormData({ ...formData, experienceText: e.target.value })}
-                    placeholder="e.g. Curated with high-grade materials and packaged inside our signature luxury box, ensuring an unforgettable unboxing moment."
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/30 bg-surface text-charcoal"
-                  />
-                </div>
+                <p className="text-[11px] text-muted-charcoal mt-1">
+                  Paragraph breaks and line formatting will be preserved in the customer storefront Description tab.
+                </p>
               </div>
 
               {/* Perfect Occasions */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5">
-                  Perfect Occasions (Shows in Description Tab)
+                  Product Occasions & Gift Tags (For catalog filtering)
                 </label>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {POPULAR_OCCASIONS.map((occ) => {
