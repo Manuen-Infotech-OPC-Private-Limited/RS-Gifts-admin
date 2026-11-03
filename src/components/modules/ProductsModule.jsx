@@ -355,14 +355,14 @@ export const ProductsModule = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-soft-gray/15 bg-warm-ivory/60 text-xs font-bold text-soft-gray uppercase tracking-wider">
-                <th className="py-3 px-4">Item & ID</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Store Pages</th>
-                <th className="py-3 px-4">Price</th>
-                <th className="py-3 px-4">Stock</th>
-                <th className="py-3 px-4">Active</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="border-b border-soft-gray/20 bg-warm-ivory/80 text-[11px] font-bold text-charcoal/70 uppercase tracking-wider">
+                <th className="py-3.5 px-4 min-w-[280px]">Item & ID</th>
+                <th className="py-3.5 px-4 min-w-[150px]">Category</th>
+                <th className="py-3.5 px-4 min-w-[160px]">Store Pages</th>
+                <th className="py-3.5 px-4 min-w-[110px]">Price</th>
+                <th className="py-3.5 px-4 min-w-[130px]">Stock</th>
+                <th className="py-3.5 px-4 min-w-[90px] text-center">Active</th>
+                <th className="py-3.5 px-4 min-w-[100px] text-right pr-6">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-soft-gray/10 text-sm">
@@ -376,10 +376,10 @@ export const ProductsModule = () => {
                 paginatedProducts.map((product) => {
                   const displayId = product.productId || product.sku || (product.id ? String(product.id) : '');
                   return (
-                    <tr key={product.id} className="hover:bg-warm-ivory/25 transition-colors">
-                      <td className="py-3 px-4">
+                    <tr key={product.id} className="hover:bg-warm-ivory/30 transition-colors">
+                      <td className="py-3.5 px-4 align-middle">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-lg bg-soft-gray/10 overflow-hidden flex items-center justify-center shrink-0 border border-soft-gray/20">
+                          <div className="w-12 h-12 rounded-xl bg-soft-gray/10 overflow-hidden flex items-center justify-center shrink-0 border border-soft-gray/20 shadow-xs">
                             {product.image ? (
                               <img
                                 src={product.image}
@@ -390,11 +390,13 @@ export const ProductsModule = () => {
                               <ImageIcon className="w-5 h-5 text-soft-gray/50" />
                             )}
                           </div>
-                          <div>
-                            <div className="font-bold text-charcoal line-clamp-1">{product.title}</div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-charcoal text-sm truncate max-w-[220px] sm:max-w-[280px]" title={product.title}>
+                              {product.title}
+                            </div>
                             <div className="text-[11px] font-mono text-soft-gray flex items-center gap-1.5 mt-0.5">
                               <span className="font-bold text-primary">ID:</span>
-                              <span className="bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20 text-charcoal">
+                              <span className="bg-primary/5 px-2 py-0.5 rounded-md border border-primary/20 text-charcoal font-semibold">
                                 {displayId}
                               </span>
                             </div>
@@ -402,21 +404,21 @@ export const ProductsModule = () => {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4">
-                        <span className="text-xs font-medium text-charcoal bg-warm-ivory px-2 py-0.5 rounded-md border border-soft-gray/15">
+                      <td className="py-3.5 px-4 align-middle">
+                        <span className="inline-flex items-center text-xs font-semibold text-charcoal bg-warm-ivory px-2.5 py-1 rounded-lg border border-soft-gray/20 whitespace-nowrap shadow-2xs">
                           {product.category || 'General'}
                         </span>
                       </td>
 
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      <td className="py-3.5 px-4 align-middle">
+                        <div className="flex flex-wrap gap-1.5 max-w-[220px]">
                           {(Array.isArray(product.targetPages) && product.targetPages.length > 0
                             ? product.targetPages
                             : [product.targetPage || 'Catalog']
                           ).map((pg) => (
                             <span
                               key={pg}
-                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20"
+                              className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 whitespace-nowrap shadow-2xs"
                             >
                               {pg}
                             </span>
@@ -424,42 +426,61 @@ export const ProductsModule = () => {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 font-bold text-charcoal">
+                      <td className="py-3.5 px-4 align-middle font-bold text-charcoal text-sm tabular-nums whitespace-nowrap">
                         {settings.currencySymbol || '₹'}
                         {Number(product.price || 0).toLocaleString('en-IN')}
                       </td>
 
-                      <td className="py-3 px-4">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${(product.stock || 0) <= 0
-                          ? 'bg-error/10 text-error'
-                          : (product.stock || 0) <= 5
-                            ? 'bg-amber-500/10 text-amber-700'
-                            : 'bg-success/10 text-success'
-                          }`}>
-                          {product.stock || 0} in stock
+                      <td className="py-3.5 px-4 align-middle">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap shadow-2xs ${
+                            (product.stock || 0) <= 0
+                              ? 'bg-error/10 text-error border border-error/20'
+                              : (product.stock || 0) <= 5
+                                ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20'
+                                : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              (product.stock || 0) <= 0
+                                ? 'bg-error'
+                                : (product.stock || 0) <= 5
+                                  ? 'bg-amber-500'
+                                  : 'bg-emerald-600'
+                            }`}
+                          />
+                          {(product.stock || 0) <= 0
+                            ? 'Out of stock'
+                            : `${product.stock} in stock`}
                         </span>
                       </td>
 
-                      <td className="py-3 px-4">
-                        <button
-                          type="button"
-                          onClick={() => toggleProductActive(product.id)}
-                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${product.active !== false ? 'bg-primary' : 'bg-soft-gray/30'
+                      <td className="py-3.5 px-4 align-middle text-center">
+                        <div className="flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => toggleProductActive(product.id)}
+                            className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${
+                              product.active !== false ? 'bg-primary' : 'bg-soft-gray/30'
                             }`}
-                        >
-                          <span
-                            className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${product.active !== false ? 'left-4.5' : 'left-0.5'
+                            aria-label="Toggle active status"
+                          >
+                            <span
+                              className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${
+                                product.active !== false ? 'left-5' : 'left-1'
                               }`}
-                          />
-                        </button>
+                            />
+                          </button>
+                        </div>
                       </td>
 
-                      <td className="py-3 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
+                      <td className="py-3.5 px-4 align-middle text-right pr-6">
+                        <div className="inline-flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(product)}
-                            className="p-1.5 rounded-lg text-soft-gray hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-soft-gray hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
                             title="Edit Product & Dynamic Details"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -467,7 +488,7 @@ export const ProductsModule = () => {
                           <button
                             type="button"
                             onClick={() => setDeleteId(product.id)}
-                            className="p-1.5 rounded-lg text-soft-gray hover:text-error hover:bg-error/10 transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-soft-gray hover:text-error hover:bg-error/10 transition-colors cursor-pointer"
                             title="Delete Product"
                           >
                             <Trash2 className="w-4 h-4" />
