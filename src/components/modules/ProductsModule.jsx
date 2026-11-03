@@ -4,14 +4,19 @@ import {
   Search,
   Edit2,
   Trash2,
-  Star,
   Check,
   Image as ImageIcon,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Info,
+  FileText,
+  Package,
+  Truck,
+  Sparkles,
+  X,
+  RotateCcw
 } from 'lucide-react';
-import { useAdmin, ensure6DigitProductId, generateNextUniqueProductId } from '../../context/AdminContext';
-import { Badge } from '../common/Badge';
+import { useAdmin } from '../../context/AdminContext';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
@@ -25,6 +30,19 @@ export const AVAILABLE_TARGET_PAGES = [
   'New Arrivals'
 ];
 
+export const POPULAR_OCCASIONS = [
+  'Birthday',
+  'Anniversary',
+  "Valentine's Day",
+  'Wedding & Engagement',
+  'Festive & Diwali',
+  'Romantic Surprises',
+  'Corporate & Executive',
+  'Housewarming',
+  'Congratulations',
+  'Baby Shower'
+];
+
 export const ProductsModule = () => {
   const {
     products,
@@ -33,8 +51,7 @@ export const ProductsModule = () => {
     addProduct,
     updateProduct,
     deleteProduct,
-    toggleProductActive,
-    toggleProductFeatured
+    toggleProductActive
   } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +59,7 @@ export const ProductsModule = () => {
   const [selectedPage, setSelectedPage] = useState('ALL');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState('basic'); // 'basic' | 'description' | 'specs' | 'shipping'
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -51,12 +69,33 @@ export const ProductsModule = () => {
     category: categories[0]?.name || 'Gifts',
     targetPage: 'Birthday Gifts',
     targetPages: ['Birthday Gifts'],
+    occasions: ['Birthday Gifts'],
     price: '',
     stock: '',
     lowStockThreshold: 5,
     image: '',
     active: true,
-    featured: false
+    featured: false,
+
+    // Dynamic Experience Highlight
+    experienceTitle: 'The RS Gifts Experience',
+    experienceText: 'Curated with high-grade materials and packaged inside our signature luxury box, ensuring an unforgettable unboxing moment.',
+
+    // Dynamic Package & Specifications
+    inTheBox: '',
+    material: '',
+    dimensions: '',
+    weight: '',
+    color: '',
+    countryOfOrigin: 'India',
+    careInstructions: '',
+    customSpecs: [],
+
+    // Dynamic Shipping & Returns
+    dispatchTimeline: 'Orders placed before 4:00 PM IST are dispatched within 24 hours.',
+    transitTimeline: 'Metro cities: 2-3 business days. Rest of India: 3-5 business days.',
+    freeShippingNote: 'Applied automatically on all orders above ₹999 across India.',
+    returnPolicy: '7-day hassle-free replacement in the unlikely event of transit damage or manufacturing defect.'
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -65,20 +104,43 @@ export const ProductsModule = () => {
   const handleOpenAdd = () => {
     setEditingProduct(null);
     setFormData(initialFormState);
+    setActiveModalTab('basic');
     setErrors({});
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (product) => {
     setEditingProduct(product);
+    const specs = product.specifications || {};
+    const ship = product.shippingDetails || {};
+
     setFormData({
       ...product,
       targetPage: product.targetPage || (Array.isArray(product.targetPages) ? product.targetPages[0] : '') || '',
       targetPages: Array.isArray(product.targetPages) && product.targetPages.length > 0 ? product.targetPages : (product.targetPage ? [product.targetPage] : []),
+      occasions: Array.isArray(product.occasions) && product.occasions.length > 0 ? product.occasions : (product.targetPages || []),
       price: (product.price || product.salePrice || '').toString(),
       stock: (product.stock ?? 0).toString(),
-      lowStockThreshold: product.lowStockThreshold || 5
+      lowStockThreshold: product.lowStockThreshold || 5,
+
+      experienceTitle: product.experienceTitle || 'The RS Gifts Experience',
+      experienceText: product.experienceText || 'Curated with high-grade materials and packaged inside our signature luxury box, ensuring an unforgettable unboxing moment.',
+
+      inTheBox: product.inTheBox || '',
+      material: specs.material || '',
+      dimensions: specs.dimensions || '',
+      weight: specs.weight || '',
+      color: specs.color || '',
+      countryOfOrigin: specs.countryOfOrigin || 'India',
+      careInstructions: specs.careInstructions || '',
+      customSpecs: Array.isArray(specs.customSpecs) ? specs.customSpecs : [],
+
+      dispatchTimeline: ship.dispatchTimeline || 'Orders placed before 4:00 PM IST are dispatched within 24 hours.',
+      transitTimeline: ship.transitTimeline || 'Metro cities: 2-3 business days. Rest of India: 3-5 business days.',
+      freeShippingNote: ship.freeShippingNote || 'Applied automatically on all orders above ₹999 across India.',
+      returnPolicy: ship.returnPolicy || '7-day hassle-free replacement in the unlikely event of transit damage or manufacturing defect.'
     });
+    setActiveModalTab('basic');
     setErrors({});
     setIsModalOpen(true);
   };
@@ -104,6 +166,11 @@ export const ProductsModule = () => {
     }
 
     setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      if (errs.title || errs.price || errs.stock || errs.category || errs.image) {
+        setActiveModalTab('basic');
+      }
+    }
     return Object.keys(errs).length === 0;
   };
 
@@ -115,15 +182,40 @@ export const ProductsModule = () => {
       ? formData.targetPages
       : (formData.targetPage ? [formData.targetPage] : (formData.category ? [formData.category] : []));
 
+    const occasionsList = Array.isArray(formData.occasions) && formData.occasions.length > 0
+      ? formData.occasions
+      : targetPagesList;
+
     const productPayload = {
       ...formData,
       targetPages: targetPagesList,
       targetPage: formData.targetPage || targetPagesList[0] || '',
-      occasions: targetPagesList,
+      occasions: occasionsList,
       price: parseFloat(formData.price),
       salePrice: parseFloat(formData.price),
       stock: parseInt(formData.stock, 10),
-      lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5
+      lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5,
+
+      experienceTitle: formData.experienceTitle || 'The RS Gifts Experience',
+      experienceText: formData.experienceText || '',
+
+      inTheBox: formData.inTheBox || '',
+      specifications: {
+        material: formData.material || '',
+        dimensions: formData.dimensions || '',
+        weight: formData.weight || '',
+        color: formData.color || '',
+        countryOfOrigin: formData.countryOfOrigin || 'India',
+        careInstructions: formData.careInstructions || '',
+        customSpecs: Array.isArray(formData.customSpecs) ? formData.customSpecs.filter(s => s.key && s.value) : []
+      },
+
+      shippingDetails: {
+        dispatchTimeline: formData.dispatchTimeline || '',
+        transitTimeline: formData.transitTimeline || '',
+        freeShippingNote: formData.freeShippingNote || '',
+        returnPolicy: formData.returnPolicy || ''
+      }
     };
 
     if (editingProduct) {
@@ -134,479 +226,831 @@ export const ProductsModule = () => {
     setIsModalOpen(false);
   };
 
+  const handleFillDefaultShipping = () => {
+    setFormData(prev => ({
+      ...prev,
+      dispatchTimeline: 'Orders placed before 4:00 PM IST are dispatched within 24 hours.',
+      transitTimeline: 'Metro cities: 2-3 business days. Rest of India: 3-5 business days.',
+      freeShippingNote: 'Applied automatically on all orders above ₹999 across India.',
+      returnPolicy: '7-day hassle-free replacement in the unlikely event of transit damage or manufacturing defect.'
+    }));
+  };
+
+  const handleAddCustomSpec = () => {
+    setFormData(prev => ({
+      ...prev,
+      customSpecs: [...(prev.customSpecs || []), { key: '', value: '' }]
+    }));
+  };
+
+  const handleUpdateCustomSpec = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...(prev.customSpecs || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, customSpecs: updated };
+    });
+  };
+
+  const handleRemoveCustomSpec = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      customSpecs: (prev.customSpecs || []).filter((_, i) => i !== index)
+    }));
+  };
+
   const filteredProducts = products.filter((p) => {
     const pId = p.productId || p.sku || (p.id ? String(p.id) : '');
     const matchesSearch =
       (p.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pId.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCat = selectedCategory === 'ALL' || p.category === selectedCategory;
-    const pPages = Array.isArray(p.targetPages) && p.targetPages.length > 0
-      ? p.targetPages
-      : (p.targetPage ? [p.targetPage] : [p.category]);
+      pId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.category || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === 'ALL' || p.category === selectedCategory;
+
     const matchesPage =
       selectedPage === 'ALL' ||
-      pPages.some((pg) => pg?.toLowerCase() === selectedPage.toLowerCase()) ||
-      p.targetPage?.toLowerCase() === selectedPage.toLowerCase() ||
-      p.category?.toLowerCase() === selectedPage.toLowerCase();
+      p.targetPage === selectedPage ||
+      (Array.isArray(p.targetPages) && p.targetPages.includes(selectedPage));
 
-    return matchesSearch && matchesCat && matchesPage;
+    return matchesSearch && matchesCategory && matchesPage;
   });
 
-  // Pagination (7 products per page, scrollable)
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
+  const itemsPerPage = 8;
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedPage]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedProducts = useMemo(() => {
-    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredProducts, startIndex, itemsPerPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-12">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight">Gift Catalog</h1>
+          <h1 className="text-2xl font-bold text-charcoal tracking-tight">Products Management</h1>
           <p className="text-sm text-soft-gray mt-1">
-            Manage your gift products, pricing, stock levels, and assign to customer pages.
+            Create, customize details & specs, and manage your gift items.
           </p>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Add New Gift
+          Add Gift Product
         </button>
       </div>
 
-      <div className="bg-surface p-4 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col md:flex-row items-center gap-4">
-        <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-soft-gray absolute left-3.5 top-1/2 -translate-y-1/2" />
+      {/* Filter and Search Bar */}
+      <div className="bg-surface p-4 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-soft-gray" />
           <input
             type="text"
+            placeholder="Search by title, 6-digit ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search gifts by name or ID..."
-            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-soft-gray/25 bg-warm-ivory/40 text-charcoal placeholder-soft-gray focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary"
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary text-charcoal"
           />
         </div>
 
-        <div className="w-full md:w-48">
-          <select
-            value={selectedPage}
-            onChange={(e) => setSelectedPage(e.target.value)}
-            className="w-full px-3.5 py-2 text-sm rounded-xl border border-soft-gray/25 bg-surface text-charcoal focus:border-primary focus:ring-1 focus:ring-primary font-medium"
-          >
-            <option value="ALL">All Store Pages</option>
-            {AVAILABLE_TARGET_PAGES.map((p) => (
-              <option key={p} value={p}>
-                Page: {p}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="w-full md:w-48">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3.5 py-2 text-sm rounded-xl border border-soft-gray/25 bg-surface text-charcoal focus:border-primary focus:ring-1 focus:ring-primary"
+            className="px-3 py-2 text-xs font-semibold rounded-xl border border-soft-gray/30 bg-surface text-charcoal focus:outline-none focus:border-primary"
           >
-            <option value="ALL">All Categories</option>
+            <option value="ALL">All Categories ({categories.length})</option>
             {categories.map((c) => (
               <option key={c.id} value={c.name}>
                 {c.name}
               </option>
             ))}
           </select>
+
+          <select
+            value={selectedPage}
+            onChange={(e) => setSelectedPage(e.target.value)}
+            className="px-3 py-2 text-xs font-semibold rounded-xl border border-soft-gray/30 bg-surface text-charcoal focus:outline-none focus:border-primary"
+          >
+            <option value="ALL">All Store Pages</option>
+            {AVAILABLE_TARGET_PAGES.map((page) => (
+              <option key={page} value={page}>
+                {page}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
+      {/* Products Table Card */}
       <div className="bg-surface rounded-2xl border border-soft-gray/20 shadow-card overflow-hidden">
-        <div className="overflow-x-auto overflow-y-auto max-h-[460px] no-scrollbar">
-          <table className="w-full text-left text-sm text-charcoal relative border-collapse">
-            <thead className="sticky top-0 z-20 bg-warm-ivory text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15 shadow-xs">
-              <tr>
-                <th className="px-6 py-3.5 bg-warm-ivory">Product</th>
-                <th className="px-6 py-3.5 bg-warm-ivory">Product ID</th>
-                <th className="px-6 py-3.5 bg-warm-ivory">Category</th>
-                <th className="px-6 py-3.5 bg-warm-ivory">Selling Price</th>
-                <th className="px-6 py-3.5 bg-warm-ivory">Stock</th>
-                <th className="px-6 py-3.5 bg-warm-ivory">Status</th>
-                <th className="px-6 py-3.5 text-right bg-warm-ivory">Actions</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-soft-gray/15 bg-warm-ivory/60 text-xs font-bold text-soft-gray uppercase tracking-wider">
+                <th className="py-3 px-4">Item & ID</th>
+                <th className="py-3 px-4">Category</th>
+                <th className="py-3 px-4">Store Pages</th>
+                <th className="py-3 px-4">Price</th>
+                <th className="py-3 px-4">Stock</th>
+                <th className="py-3 px-4">Active</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-soft-gray/10">
-              {paginatedProducts.map((p) => {
-                const isLowStock = p.stock <= (p.lowStockThreshold || 5) && p.stock > 0;
-                const isOutOfStock = p.stock === 0;
-
-                return (
-                  <tr key={p.id} className="hover:bg-warm-ivory/40 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt={p.title}
-                            className="w-12 h-12 rounded-xl object-cover border border-soft-gray/20 flex-shrink-0"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.style.display = 'none';
-                              if (e.target.nextElementSibling) {
-                                e.target.nextElementSibling.style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        <div
-                          className={`w-12 h-12 rounded-xl bg-secondary/15 border border-soft-gray/20 flex-shrink-0 items-center justify-center text-primary ${p.image ? 'hidden' : 'flex'
-                            }`}
-                        >
-                          <ImageIcon className="w-5 h-5 text-primary/70" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-charcoal">
-                            {p.title}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center text-xs font-mono font-bold text-primary bg-warm-ivory/80 px-2.5 py-1 rounded-lg border border-soft-gray/20 shadow-xs">
-                        {ensure6DigitProductId(p.productId || p.sku, p.id || p._id)}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-charcoal">{p.category}</div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-charcoal">
-                        {settings.currencySymbol || '₹'}
-                        {p.price || p.salePrice || 0}
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2 whitespace-nowrap">
-                        <span className="font-semibold text-charcoal">{p.stock} units</span>
-                        {isOutOfStock ? (
-                          <Badge variant="error">Out of Stock</Badge>
-                        ) : isLowStock ? (
-                          <Badge variant="error">Low Stock</Badge>
-                        ) : (
-                          <Badge variant="success">In Stock</Badge>
-                        )}
-                      </div>
-                    </td>
-
-
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => toggleProductActive(p.id)}
-                        className={`text-xs px-2.5 py-1 rounded-full font-semibold border transition-colors ${p.active
-                          ? 'bg-success/10 text-success border-success/20 hover:bg-success/20'
-                          : 'bg-soft-gray/10 text-soft-gray border-soft-gray/20 hover:bg-soft-gray/20'
-                          }`}
-                      >
-                        {p.active ? 'Active' : 'Draft'}
-                      </button>
-                    </td>
-
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => toggleProductFeatured(p.id || p._id)}
-                          className={`p-1.5 rounded-lg border transition-colors ${p.featured
-                            ? 'bg-[#C9A45C]/15 text-[#916F2E] border-[#C9A45C]/40 hover:bg-[#C9A45C]/25'
-                            : 'text-soft-gray border-soft-gray/20 hover:text-[#C9A45C] hover:bg-[#C9A45C]/10'
-                            }`}
-                          title={p.featured ? 'Remove from Featured Products' : 'Add to Featured Products'}
-                        >
-                          <Star className="w-4 h-4" fill={p.featured ? 'currentColor' : 'none'} />
-                        </button>
-                        <button
-                          onClick={() => handleOpenEdit(p)}
-                          className="p-1.5 rounded-lg text-soft-gray hover:text-primary hover:bg-primary/10 border border-soft-gray/20 hover:border-primary/40 transition-colors"
-                          title="Edit Gift Product"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(p.id)}
-                          className="p-1.5 rounded-lg text-soft-gray hover:text-primary hover:bg-primary/10 border border-soft-gray/20 hover:border-primary/40 transition-colors"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-
-              {filteredProducts.length === 0 && (
+            <tbody className="divide-y divide-soft-gray/10 text-sm">
+              {paginatedProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-sm text-soft-gray">
-                    {products.length === 0
-                      ? "No gifts in catalog yet. Click 'Add Gift Product' above to create your first gift item."
-                      : "No gifts found matching your search and filter criteria."}
+                  <td colSpan={7} className="py-12 text-center text-soft-gray">
+                    No gifts match your search criteria.
                   </td>
                 </tr>
+              ) : (
+                paginatedProducts.map((product) => {
+                  const displayId = product.productId || product.sku || (product.id ? String(product.id) : '');
+                  return (
+                    <tr key={product.id} className="hover:bg-warm-ivory/25 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-lg bg-soft-gray/10 overflow-hidden flex items-center justify-center shrink-0 border border-soft-gray/20">
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="w-5 h-5 text-soft-gray/50" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold text-charcoal line-clamp-1">{product.title}</div>
+                            <div className="text-[11px] font-mono text-soft-gray flex items-center gap-1.5 mt-0.5">
+                              <span className="font-bold text-primary">ID:</span>
+                              <span className="bg-primary/5 px-1.5 py-0.2 rounded border border-primary/20 text-charcoal">
+                                {displayId}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <span className="text-xs font-medium text-charcoal bg-warm-ivory px-2 py-0.5 rounded-md border border-soft-gray/15">
+                          {product.category || 'General'}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {(Array.isArray(product.targetPages) && product.targetPages.length > 0
+                            ? product.targetPages
+                            : [product.targetPage || 'Catalog']
+                          ).map((pg) => (
+                            <span
+                              key={pg}
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20"
+                            >
+                              {pg}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4 font-bold text-charcoal">
+                        {settings.currencySymbol || '₹'}
+                        {Number(product.price || 0).toLocaleString('en-IN')}
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                          (product.stock || 0) <= 0
+                            ? 'bg-error/10 text-error'
+                            : (product.stock || 0) <= 5
+                            ? 'bg-amber-500/10 text-amber-700'
+                            : 'bg-success/10 text-success'
+                        }`}>
+                          {product.stock || 0} in stock
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <button
+                          type="button"
+                          onClick={() => toggleProductActive(product.id)}
+                          className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${
+                            product.active !== false ? 'bg-primary' : 'bg-soft-gray/30'
+                          }`}
+                        >
+                          <span
+                            className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${
+                              product.active !== false ? 'left-4.5' : 'left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(product)}
+                            className="p-1.5 rounded-lg text-soft-gray hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                            title="Edit Product & Dynamic Details"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteId(product.id)}
+                            className="p-1.5 rounded-lg text-soft-gray hover:text-error hover:bg-error/10 transition-colors cursor-pointer"
+                            title="Delete Product"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-        {/* Pagination Bar (7 products per page) */}
+
+        {/* Pagination */}
         {filteredProducts.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3.5 border-t border-soft-gray/15 bg-warm-ivory/30 gap-3">
-            <div className="text-xs text-soft-gray font-medium">
-              Showing <span className="font-semibold text-charcoal">{startIndex + 1}</span> to{' '}
-              <span className="font-semibold text-charcoal">
-                {Math.min(startIndex + itemsPerPage, filteredProducts.length)}
-              </span>{' '}
-              of <span className="font-semibold text-charcoal">{filteredProducts.length}</span> products
+          <div className="p-4 border-t border-soft-gray/15 flex items-center justify-between">
+            <span className="text-xs text-soft-gray">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} gifts
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-lg border border-soft-gray/30 text-charcoal disabled:opacity-30 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-semibold px-2 text-charcoal">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded-lg border border-soft-gray/30 text-charcoal disabled:opacity-30 cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Previous Page"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    type="button"
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all ${
-                      currentPage === pageNum
-                        ? 'bg-primary text-surface shadow-xs'
-                        : 'text-charcoal hover:bg-warm-ivory/80 border border-soft-gray/20'
-                    }`}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                  title="Next Page"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
 
+      {/* Add / Edit Product Modal with 4 Dynamic Tabs */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingProduct ? 'Edit Gift Product' : 'Add New Gift Product'}
-        maxWidth="max-w-3xl"
+        title={editingProduct ? 'Edit Gift Product Details' : 'Add New Gift Product'}
+        maxWidth="max-w-4xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Product Name
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g. Personalized Photo Frame"
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.title ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                  }`}
-              />
-              {errors.title && <p className="text-xs text-error mt-1">{errors.title}</p>}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
-              >
-                {categories.length === 0 ? (
-                  <option value="">No categories created yet (Add in Categories tab)</option>
-                ) : (
-                  <>
-                    <option value="">Select a category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              Description
-            </label>
-            <input
-              type="text"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Brief gift highlight or product description..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
-            />
-          </div>
-
-          {/* Add Page / Select Page Option */}
-          <div className="bg-warm-ivory/40 p-4 rounded-xl border border-soft-gray/25">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-charcoal">
-                Add to Page / Select Page
-              </label>
-              <span className="text-[11px] text-soft-gray">
-                Assign which customer storefront page displays this gift
-              </span>
-            </div>
-
-            <select
-              value={formData.targetPage}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFormData({
-                  ...formData,
-                  targetPage: val,
-                  targetPages: val ? [val] : []
-                });
-              }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary font-medium mb-2.5"
-            >
-              <option value="">-- Standard Catalog Only (No specific occasion page) --</option>
-              {AVAILABLE_TARGET_PAGES.map((page) => (
-                <option key={page} value={page}>
-                  {page}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-soft-gray font-medium mr-1">Quick Select:</span>
-              {AVAILABLE_TARGET_PAGES.map((page) => {
-                const isSelected =
-                  (formData.targetPages || []).includes(page) || formData.targetPage === page;
-                return (
-                  <button
-                    type="button"
-                    key={page}
-                    onClick={() => {
-                      const currentPages = Array.isArray(formData.targetPages) ? [...formData.targetPages] : [];
-                      let newPages;
-                      if (currentPages.includes(page)) {
-                        newPages = currentPages.filter((p) => p !== page);
-                      } else {
-                        newPages = [...currentPages, page];
-                      }
-                      setFormData({
-                        ...formData,
-                        targetPages: newPages,
-                        targetPage: newPages[0] || ''
-                      });
-                    }}
-                    className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-primary text-white border-primary shadow-xs'
-                        : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
-                    }`}
-                  >
-                    {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
-                    {page}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Selling Price ({settings.currencySymbol || '₹'})
-              </label>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="1499"
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.price ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                  }`}
-              />
-              {errors.price && <p className="text-xs text-error mt-1">{errors.price}</p>}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Inventory Stock Count
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                placeholder="25"
-                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.stock ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
-                  }`}
-              />
-              {errors.stock && <p className="text-xs text-error mt-1">{errors.stock}</p>}
-            </div>
-          </div>
-
-          <CloudinaryUpload
-            value={formData.image}
-            onChange={(url) => setFormData({ ...formData, image: url })}
-            label="Product Gift Image"
-            recommendedDimensions="800 × 800 px"
-            aspectRatio="1:1 (square)"
-          />
-          {errors.image && <p className="text-xs text-error mt-1">{errors.image}</p>}
-
-
-          <div className="flex items-center justify-end gap-3 pt-3 pb-2 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Sub-Tabs Navigation */}
+          <div className="flex items-center gap-1.5 sm:gap-2 border-b border-soft-gray/20 pb-3 overflow-x-auto">
             <button
               type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-5 py-2.5 rounded-xl border border-soft-gray/25 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors"
+              onClick={() => setActiveModalTab('basic')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                activeModalTab === 'basic'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+              }`}
             >
-              Cancel
+              <Info className="w-3.5 h-3.5" />
+              1. Basic Info
             </button>
+
             <button
-              type="submit"
-              className="px-6 py-2.5 rounded-xl bg-primary text-surface text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
+              type="button"
+              onClick={() => setActiveModalTab('description')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                activeModalTab === 'description'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+              }`}
             >
-              {editingProduct ? 'Save Changes' : 'Create Gift Product'}
+              <FileText className="w-3.5 h-3.5" />
+              2. Description & Experience
             </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveModalTab('specs')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                activeModalTab === 'specs'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              3. In The Box & Specs
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveModalTab('shipping')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                activeModalTab === 'shipping'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'bg-warm-ivory/80 text-charcoal hover:bg-soft-gray/10'
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              4. Shipping & Returns
+            </button>
+          </div>
+
+          {/* TAB 1: BASIC INFO */}
+          {activeModalTab === 'basic' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                    Product Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g. Personalized Wooden Moon Lamp"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
+                      errors.title ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                    }`}
+                  />
+                  {errors.title && <p className="text-xs text-error mt-1">{errors.title}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                    Category *
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                  >
+                    {categories.length === 0 ? (
+                      <option value="">No categories created yet</option>
+                    ) : (
+                      categories.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {/* Target Pages */}
+              <div className="bg-warm-ivory/40 p-4 rounded-xl border border-soft-gray/25">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-charcoal">
+                    Assign Storefront Pages
+                  </label>
+                  <span className="text-[11px] text-soft-gray">
+                    Select where this product appears on the storefront
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  {AVAILABLE_TARGET_PAGES.map((page) => {
+                    const isSelected = (formData.targetPages || []).includes(page);
+                    return (
+                      <button
+                        type="button"
+                        key={page}
+                        onClick={() => {
+                          const currentPages = Array.isArray(formData.targetPages) ? [...formData.targetPages] : [];
+                          let newPages = currentPages.includes(page)
+                            ? currentPages.filter((p) => p !== page)
+                            : [...currentPages, page];
+                          setFormData({
+                            ...formData,
+                            targetPages: newPages,
+                            targetPage: newPages[0] || ''
+                          });
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-primary text-white border-primary shadow-xs'
+                            : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
+                        }`}
+                      >
+                        {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                    Selling Price ({settings.currencySymbol || '₹'}) *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    placeholder="1199"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
+                      errors.price ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                    }`}
+                  />
+                  {errors.price && <p className="text-xs text-error mt-1">{errors.price}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                    Inventory Stock Count *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    placeholder="20"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${
+                      errors.stock ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                    }`}
+                  />
+                  {errors.stock && <p className="text-xs text-error mt-1">{errors.stock}</p>}
+                </div>
+              </div>
+
+              <CloudinaryUpload
+                value={formData.image}
+                onChange={(url) => setFormData({ ...formData, image: url })}
+                label="Product Gift Image *"
+                recommendedDimensions="800 × 800 px"
+                aspectRatio="1:1 (square)"
+              />
+              {errors.image && <p className="text-xs text-error mt-1">{errors.image}</p>}
+            </div>
+          )}
+
+          {/* TAB 2: DESCRIPTION & EXPERIENCE */}
+          {activeModalTab === 'description' && (
+            <div className="space-y-4 animate-fade-in">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                  Product Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Detailed description of this unique gift item..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              {/* Experience Card Settings */}
+              <div className="p-4 rounded-xl bg-warm-ivory/50 border border-soft-gray/25 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-charcoal">
+                    Brand Experience Card (Customer Details Tab)
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Experience Box Title
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.experienceTitle}
+                    onChange={(e) => setFormData({ ...formData, experienceTitle: e.target.value })}
+                    placeholder="e.g. The RS Gifts Experience"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/30 bg-surface text-charcoal"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Experience Box Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={formData.experienceText}
+                    onChange={(e) => setFormData({ ...formData, experienceText: e.target.value })}
+                    placeholder="e.g. Curated with high-grade materials and packaged inside our signature luxury box, ensuring an unforgettable unboxing moment."
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/30 bg-surface text-charcoal"
+                  />
+                </div>
+              </div>
+
+              {/* Perfect Occasions */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5">
+                  Perfect Occasions (Shows in Description Tab)
+                </label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {POPULAR_OCCASIONS.map((occ) => {
+                    const isSelected = (formData.occasions || []).includes(occ);
+                    return (
+                      <button
+                        type="button"
+                        key={occ}
+                        onClick={() => {
+                          const current = Array.isArray(formData.occasions) ? [...formData.occasions] : [];
+                          const updated = current.includes(occ)
+                            ? current.filter(o => o !== occ)
+                            : [...current, occ];
+                          setFormData({ ...formData, occasions: updated });
+                        }}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-primary text-white border-primary shadow-xs'
+                            : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
+                        }`}
+                      >
+                        {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
+                        {occ}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: SPECIFICATIONS & IN THE BOX */}
+          {activeModalTab === 'specs' && (
+            <div className="space-y-4 animate-fade-in">
+              {/* In The Box */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                  In The Box / Package Contents
+                </label>
+                <input
+                  type="text"
+                  value={formData.inTheBox}
+                  onChange={(e) => setFormData({ ...formData, inTheBox: e.target.value })}
+                  placeholder="e.g. 1x Moon Lamp, 1x Solid Wood Stand, 1x USB Cable, 1x Remote Control, 1x Luxury Box"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                />
+                <p className="text-[11px] text-soft-gray mt-1">
+                  List the items customer receives inside the package.
+                </p>
+              </div>
+
+              {/* Standard Specifications Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Material
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.material}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    placeholder="e.g. 3D Printed PLA Plastic / Solid Wood"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/25 text-charcoal bg-surface"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Dimensions / Size
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.dimensions}
+                    onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                    placeholder="e.g. 15 cm x 15 cm x 18 cm"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/25 text-charcoal bg-surface"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Weight
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.weight}
+                    onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                    placeholder="e.g. 450 grams"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/25 text-charcoal bg-surface"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Color / Finish
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    placeholder="e.g. 16 Color RGB + Warm White"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/25 text-charcoal bg-surface"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Country of Origin
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.countryOfOrigin}
+                    onChange={(e) => setFormData({ ...formData, countryOfOrigin: e.target.value })}
+                    placeholder="India"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/25 text-charcoal bg-surface"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">
+                    Care Instructions
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.careInstructions}
+                    onChange={(e) => setFormData({ ...formData, careInstructions: e.target.value })}
+                    placeholder="e.g. Clean with a soft dry cloth"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-soft-gray/25 text-charcoal bg-surface"
+                  />
+                </div>
+              </div>
+
+              {/* Dynamic Custom Specifications */}
+              <div className="pt-2 border-t border-soft-gray/20">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-charcoal">
+                    Additional Specifications (Optional)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAddCustomSpec}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Attribute
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {(formData.customSpecs || []).map((spec, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Key (e.g. Battery Life)"
+                        value={spec.key}
+                        onChange={(e) => handleUpdateCustomSpec(idx, 'key', e.target.value)}
+                        className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-soft-gray/30 bg-surface text-charcoal"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Value (e.g. 8-10 Hours)"
+                        value={spec.value}
+                        onChange={(e) => handleUpdateCustomSpec(idx, 'value', e.target.value)}
+                        className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-soft-gray/30 bg-surface text-charcoal"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCustomSpec(idx)}
+                        className="p-1.5 text-soft-gray hover:text-error hover:bg-error/10 rounded-lg cursor-pointer"
+                        title="Delete attribute"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {(formData.customSpecs || []).length === 0 && (
+                    <p className="text-xs text-soft-gray italic">
+                      No additional custom attributes added yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: SHIPPING & RETURNS */}
+          {activeModalTab === 'shipping' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-warm-ivory/60 border border-soft-gray/20">
+                <div>
+                  <h4 className="text-xs font-bold text-charcoal">Product Shipping & Return Guidelines</h4>
+                  <p className="text-[11px] text-soft-gray">
+                    Customize dispatch times, transit estimates, and return terms specifically for this gift.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFillDefaultShipping}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors cursor-pointer"
+                  title="Auto-fill standard store defaults"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Fill Standard Defaults
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                  Dispatch Timeline
+                </label>
+                <input
+                  type="text"
+                  value={formData.dispatchTimeline}
+                  onChange={(e) => setFormData({ ...formData, dispatchTimeline: e.target.value })}
+                  placeholder="e.g. Orders placed before 4:00 PM IST are dispatched within 24 hours."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                  Transit & Delivery Estimates
+                </label>
+                <input
+                  type="text"
+                  value={formData.transitTimeline}
+                  onChange={(e) => setFormData({ ...formData, transitTimeline: e.target.value })}
+                  placeholder="e.g. Metro cities: 2-3 business days. Rest of India: 3-5 business days."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                  Free Shipping Threshold Note
+                </label>
+                <input
+                  type="text"
+                  value={formData.freeShippingNote}
+                  onChange={(e) => setFormData({ ...formData, freeShippingNote: e.target.value })}
+                  placeholder="e.g. Applied automatically on all orders above ₹999 across India."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                  Return & Replacement Policy
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.returnPolicy}
+                  onChange={(e) => setFormData({ ...formData, returnPolicy: e.target.value })}
+                  placeholder="e.g. 7-day hassle-free replacement in the unlikely event of transit damage or defect."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Modal Footer */}
+          <div className="flex items-center justify-between pt-4 pb-2 border-t border-soft-gray/20">
+            <div className="flex items-center gap-1.5 text-xs text-soft-gray">
+              <span>Tab {activeModalTab === 'basic' ? '1/4' : activeModalTab === 'description' ? '2/4' : activeModalTab === 'specs' ? '3/4' : '4/4'}</span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-soft-gray/25 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 rounded-xl bg-primary text-surface text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
+              >
+                {editingProduct ? 'Save Changes' : 'Create Gift Product'}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>
