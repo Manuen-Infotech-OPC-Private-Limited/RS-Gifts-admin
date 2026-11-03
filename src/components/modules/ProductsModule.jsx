@@ -56,7 +56,8 @@ export const ProductsModule = () => {
     lowStockThreshold: 5,
     image: '',
     active: true,
-    featured: false
+    featured: false,
+    rating: 5
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -77,7 +78,8 @@ export const ProductsModule = () => {
       targetPages: Array.isArray(product.targetPages) && product.targetPages.length > 0 ? product.targetPages : (product.targetPage ? [product.targetPage] : []),
       price: (product.price || product.salePrice || '').toString(),
       stock: (product.stock ?? 0).toString(),
-      lowStockThreshold: product.lowStockThreshold || 5
+      lowStockThreshold: product.lowStockThreshold || 5,
+      rating: product.rating ?? product.ratings?.average ?? 5
     });
     setErrors({});
     setIsModalOpen(true);
@@ -123,7 +125,8 @@ export const ProductsModule = () => {
       price: parseFloat(formData.price),
       salePrice: parseFloat(formData.price),
       stock: parseInt(formData.stock, 10),
-      lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5
+      lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5,
+      rating: Number(formData.rating || 5)
     };
 
     if (editingProduct) {
@@ -273,6 +276,18 @@ export const ProductsModule = () => {
                         <div>
                           <div className="font-semibold text-charcoal">
                             {p.title}
+                          </div>
+                          <div className="flex items-center gap-0.5 mt-1" title={`Rated ${p.rating || 5} out of 5 stars`}>
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`w-3 h-3 ${
+                                  s <= Math.round(Number(p.rating || p.ratings?.average || 5))
+                                    ? 'fill-[#C9A45C] text-[#C9A45C]'
+                                    : 'fill-[#E8DFD8] text-[#D4C8BF]'
+                                }`}
+                              />
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -547,7 +562,7 @@ export const ProductsModule = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
                 Selling Price ({settings.currencySymbol || '₹'})
@@ -567,7 +582,7 @@ export const ProductsModule = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Inventory Stock Count
+                Inventory Stock
               </label>
               <input
                 type="number"
@@ -580,6 +595,31 @@ export const ProductsModule = () => {
                   }`}
               />
               {errors.stock && <p className="text-xs text-error mt-1">{errors.stock}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                Rating ({formData.rating || 5} Stars)
+              </label>
+              <div className="flex items-center gap-1 pt-1.5">
+                {[1, 2, 3, 4, 5].map((starVal) => (
+                  <button
+                    type="button"
+                    key={starVal}
+                    onClick={() => setFormData({ ...formData, rating: starVal })}
+                    className="p-0.5 cursor-pointer transition-transform hover:scale-110"
+                    title={`${starVal} Star${starVal > 1 ? 's' : ''}`}
+                  >
+                    <Star
+                      className={`w-5 h-5 ${
+                        starVal <= (formData.rating || 5)
+                          ? 'fill-[#C9A45C] text-[#C9A45C]'
+                          : 'fill-[#E8DFD8] text-[#D4C8BF]'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
