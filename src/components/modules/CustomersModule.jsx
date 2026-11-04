@@ -464,6 +464,13 @@ export const CustomersModule = () => {
                     </p>
                   </div>
 
+                  <div className="p-3.5 rounded-xl bg-warm-ivory/50 border border-soft-gray/15 sm:col-span-2">
+                    <p className="text-[11px] font-semibold text-soft-gray uppercase tracking-wider">Address / Location</p>
+                    <p className="text-sm font-bold text-charcoal mt-1">
+                      {selectedCustomer.address || selectedCustomer.addresses?.[0]?.addressLine1 || 'Not provided'}
+                    </p>
+                  </div>
+
                   <div className="p-3.5 rounded-xl bg-warm-ivory/50 border border-soft-gray/15">
                     <p className="text-[11px] font-semibold text-soft-gray uppercase tracking-wider">Database ID</p>
                     <p className="text-xs font-mono text-charcoal mt-1 truncate">
