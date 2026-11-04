@@ -32,6 +32,7 @@ export const ensure6DigitProductId = (val, fallbackSeed = '') => {
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiClient from '../services/api';
+import customerService from '../services/customerService';
 import {
   initialCategories,
   initialOccasions,
@@ -436,6 +437,18 @@ export const AdminProvider = ({ children }) => {
         }
       })
       .catch(e => console.warn('Could not load live backend inquiries:', e.message));
+
+    // Load live customer accounts from backend API
+    customerService.fetchCustomers()
+      .then(liveCustomers => {
+        if (Array.isArray(liveCustomers)) {
+          setState(prev => ({
+            ...prev,
+            customers: liveCustomers
+          }));
+        }
+      })
+      .catch(e => console.warn('Could not load live backend customers:', e.message));
   }, []);
 
   const addProduct = async (productData) => {
@@ -1318,6 +1331,42 @@ export const AdminProvider = ({ children }) => {
     showToast('Store settings saved successfully!');
   };
 
+  const refreshCustomers = async (search = '') => {
+    try {
+      const liveCustomers = await customerService.fetchCustomers(search);
+      if (Array.isArray(liveCustomers)) {
+        setState(prev => ({
+          ...prev,
+          customers: liveCustomers
+        }));
+      }
+      return liveCustomers;
+    } catch (e) {
+      console.warn('Failed to refresh customers:', e);
+      return [];
+    }
+  };
+
+  const toggleCustomerStatus = async (customerId) => {
+    try {
+      const res = await customerService.toggleStatus(customerId);
+      const isNowActive = res.customer?.isActive;
+      setState(prev => ({
+        ...prev,
+        customers: (prev.customers || []).map(c => 
+          (c.id === customerId || c._id === customerId)
+            ? { ...c, isActive: isNowActive }
+            : c
+        )
+      }));
+      showToast(res.message || 'Customer account status updated.');
+      return res;
+    } catch (e) {
+      showToast(e.message || 'Failed to update customer status.', 'error');
+      throw e;
+    }
+  };
+
   const resetToDefaultData = () => {
     const defaultData = {
       products: initialProducts,
@@ -1382,6 +1431,8 @@ export const AdminProvider = ({ children }) => {
         hideReview,
         deleteReview,
         updateSettings,
+        refreshCustomers,
+        toggleCustomerStatus,
         resetToDefaultData
       }}
     >
