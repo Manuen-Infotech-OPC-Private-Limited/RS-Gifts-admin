@@ -23,7 +23,7 @@ export const ConfirmDialog = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-soft-gray/15">
+        <div className="flex items-center justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={onClose}
