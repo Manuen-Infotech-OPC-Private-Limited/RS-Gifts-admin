@@ -689,8 +689,8 @@ export const OrdersModule = () => {
                           type="button"
                           onClick={() => setActivePreviewImage(imgUrl)}
                           className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${activePreviewImage === imgUrl
-                              ? 'border-primary ring-2 ring-primary/20 scale-105'
-                              : 'border-soft-gray/25 opacity-70 hover:opacity-100'
+                            ? 'border-primary ring-2 ring-primary/20 scale-105'
+                            : 'border-soft-gray/25 opacity-70 hover:opacity-100'
                             }`}
                         >
                           <img src={imgUrl} alt={`Thumbnail ${gIdx + 1}`} className="w-full h-full object-cover" />
@@ -759,32 +759,12 @@ export const OrdersModule = () => {
                   </div>
                   {previewProduct.orderedQuantity && (
                     <div className="text-right border-l border-soft-gray/20 pl-4">
-                      <span className="text-xs text-soft-gray uppercase font-semibold block">In This Order</span>
                       <span className="text-sm font-bold text-primary">
                         Qty: {previewProduct.orderedQuantity}
                       </span>
                     </div>
                   )}
                 </div>
-
-                {/* Target Occasion Pages */}
-                {previewProduct.targetPages && previewProduct.targetPages.length > 0 && (
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-soft-gray block mb-1">
-                      Assigned Occasion Pages
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {previewProduct.targetPages.map((page, pIdx) => (
-                        <span
-                          key={pIdx}
-                          className="px-2.5 py-1 rounded-lg bg-surface border border-soft-gray/20 text-xs font-semibold text-charcoal"
-                        >
-                          {page}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Product Description */}
                 <div>
