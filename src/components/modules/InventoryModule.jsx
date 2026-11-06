@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Boxes,
   Search,
@@ -7,7 +7,9 @@ import {
   XCircle,
   Plus,
   Minus,
-  Save
+  Save,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAdmin, ensure6DigitProductId } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
@@ -39,6 +41,20 @@ export const InventoryModule = () => {
     if (filterType === 'OUT') return p.stock === 0;
     return true;
   });
+
+  // Pagination (7 items per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedProducts = useMemo(() => {
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, startIndex, itemsPerPage]);
 
   const handleInlineChange = (productId, val) => {
     setEditQuantities({
@@ -164,22 +180,22 @@ export const InventoryModule = () => {
       </div>
 
       <div className="bg-surface rounded-2xl border border-soft-gray/20 shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-charcoal">
-            <thead className="bg-warm-ivory/60 text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15">
+        <div className="overflow-x-auto overflow-y-auto max-h-[480px]">
+          <table className="w-full text-left text-sm text-charcoal relative border-collapse">
+            <thead className="sticky top-0 z-20 bg-warm-ivory text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15 shadow-xs">
               <tr>
-                <th className="px-6 py-3.5">Product</th>
-                <th className="px-6 py-3.5">Product ID</th>
-                <th className="px-6 py-3.5">Category</th>
-                <th className="px-6 py-3.5">Price</th>
-                <th className="px-6 py-3.5">Stock Status</th>
-                <th className="px-6 py-3.5">Current Stock</th>
-                <th className="px-6 py-3.5 text-center">Quick Adjust</th>
-                <th className="px-6 py-3.5 text-right">Manual Input</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Product</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Product ID</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Category</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Price</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Stock Status</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Current Stock</th>
+                <th className="px-6 py-3.5 text-center bg-warm-ivory">Quick Adjust</th>
+                <th className="px-6 py-3.5 text-right bg-warm-ivory">Manual Input</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-soft-gray/10">
-              {filteredProducts.map((product) => {
+              {paginatedProducts.map((product) => {
                 const isLow = product.stock <= (product.lowStockThreshold || 5) && product.stock > 0;
                 const isOut = product.stock === 0;
                 const pendingInput = editQuantities[product.id];
@@ -278,7 +294,7 @@ export const InventoryModule = () => {
 
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-sm text-soft-gray">
+                  <td colSpan="8" className="text-center py-12 text-sm text-soft-gray">
                     {products.length === 0
                       ? 'No inventory items in catalog yet. Add products to monitor warehouse stock and adjust quantities.'
                       : 'No items found matching the selected stock filter.'}
@@ -288,6 +304,58 @@ export const InventoryModule = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {filteredProducts.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3.5 border-t border-soft-gray/15 bg-warm-ivory/30 gap-3">
+            <div className="text-xs text-soft-gray font-medium">
+              Showing <span className="font-semibold text-charcoal">{startIndex + 1}</span> to{' '}
+              <span className="font-semibold text-charcoal">
+                {Math.min(startIndex + itemsPerPage, filteredProducts.length)}
+              </span>{' '}
+              of <span className="font-semibold text-charcoal">{filteredProducts.length}</span> items
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    type="button"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      currentPage === pageNum
+                        ? 'bg-primary text-surface shadow-xs'
+                        : 'text-charcoal hover:bg-warm-ivory/80 border border-soft-gray/20'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  title="Next Page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

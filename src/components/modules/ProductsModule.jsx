@@ -55,6 +55,7 @@ export const ProductsModule = () => {
     stock: '',
     lowStockThreshold: 5,
     image: '',
+    gallery: [],
     active: true,
     featured: false
   };
@@ -71,8 +72,13 @@ export const ProductsModule = () => {
 
   const handleOpenEdit = (product) => {
     setEditingProduct(product);
+    const prodGallery = Array.isArray(product.gallery) && product.gallery.length > 0 ? product.gallery.filter(Boolean) : (product.image ? [product.image] : []);
+    const primaryImg = product.image || prodGallery[0] || '';
+    const normalizedGallery = prodGallery.includes(primaryImg) ? prodGallery : (primaryImg ? [primaryImg, ...prodGallery] : []);
     setFormData({
       ...product,
+      gallery: normalizedGallery,
+      image: primaryImg,
       targetPage: product.targetPage || (Array.isArray(product.targetPages) ? product.targetPages[0] : '') || '',
       targetPages: Array.isArray(product.targetPages) && product.targetPages.length > 0 ? product.targetPages : (product.targetPage ? [product.targetPage] : []),
       price: (product.price || product.salePrice || '').toString(),
@@ -99,8 +105,9 @@ export const ProductsModule = () => {
     if (!formData.category) {
       errs.category = 'Please select a category.';
     }
-    if (!formData.image.trim()) {
-      errs.image = 'Product image is required.';
+    const hasImage = Boolean(formData.image && formData.image.trim()) || (Array.isArray(formData.gallery) && formData.gallery.length > 0);
+    if (!hasImage) {
+      errs.image = 'At least one product image is required.';
     }
 
     setErrors(errs);
@@ -115,8 +122,13 @@ export const ProductsModule = () => {
       ? formData.targetPages
       : (formData.targetPage ? [formData.targetPage] : (formData.category ? [formData.category] : []));
 
+    const rawGallery = Array.isArray(formData.gallery) && formData.gallery.length > 0 ? formData.gallery.filter(Boolean) : (formData.image ? [formData.image] : []);
+    const primaryImage = formData.image || rawGallery[0] || '';
+    const finalGallery = rawGallery.includes(primaryImage) ? rawGallery : (primaryImage ? [primaryImage, ...rawGallery] : []);
     const productPayload = {
       ...formData,
+      image: primaryImage,
+      gallery: finalGallery,
       targetPages: targetPagesList,
       targetPage: formData.targetPage || targetPagesList[0] || '',
       occasions: targetPagesList,
@@ -158,7 +170,7 @@ export const ProductsModule = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory, selectedPage]);
+  }, [searchTerm, selectedCategory]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -272,7 +284,7 @@ export const ProductsModule = () => {
                         </div>
                         <div>
                           <div className="font-semibold text-charcoal">
-                            {p.title}
+                            <span>{p.title}</span>
                           </div>
                         </div>
                       </div>
@@ -467,84 +479,21 @@ export const ProductsModule = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-              Description
-            </label>
-            <input
-              type="text"
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal">
+                Description
+              </label>
+              <span className="text-[11px] text-soft-gray font-medium">
+                {formData.description?.length || 0} characters
+              </span>
+            </div>
+            <textarea
+              rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Brief gift highlight or product description..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary leading-relaxed resize-y min-h-[75px]"
             />
-          </div>
-
-          {/* Add Page / Select Page Option */}
-          <div className="bg-warm-ivory/40 p-4 rounded-xl border border-soft-gray/25">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-charcoal">
-                Add to Page / Select Page
-              </label>
-              <span className="text-[11px] text-soft-gray">
-                Assign which customer storefront page displays this gift
-              </span>
-            </div>
-
-            <select
-              value={formData.targetPage}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFormData({
-                  ...formData,
-                  targetPage: val,
-                  targetPages: val ? [val] : []
-                });
-              }}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary font-medium mb-2.5"
-            >
-              <option value="">-- Standard Catalog Only (No specific occasion page) --</option>
-              {AVAILABLE_TARGET_PAGES.map((page) => (
-                <option key={page} value={page}>
-                  {page}
-                </option>
-              ))}
-            </select>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-soft-gray font-medium mr-1">Quick Select:</span>
-              {AVAILABLE_TARGET_PAGES.map((page) => {
-                const isSelected =
-                  (formData.targetPages || []).includes(page) || formData.targetPage === page;
-                return (
-                  <button
-                    type="button"
-                    key={page}
-                    onClick={() => {
-                      const currentPages = Array.isArray(formData.targetPages) ? [...formData.targetPages] : [];
-                      let newPages;
-                      if (currentPages.includes(page)) {
-                        newPages = currentPages.filter((p) => p !== page);
-                      } else {
-                        newPages = [...currentPages, page];
-                      }
-                      setFormData({
-                        ...formData,
-                        targetPages: newPages,
-                        targetPage: newPages[0] || ''
-                      });
-                    }}
-                    className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-primary text-white border-primary shadow-xs'
-                        : 'bg-surface text-charcoal border-soft-gray/30 hover:border-primary/50'
-                    }`}
-                  >
-                    {isSelected ? <Check className="w-3.5 h-3.5 inline mr-1" /> : <Plus className="w-3.5 h-3.5 inline mr-1" />}
-                    {page}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -585,30 +534,36 @@ export const ProductsModule = () => {
 
           <CloudinaryUpload
             value={formData.image}
-            onChange={(url) => setFormData({ ...formData, image: url })}
+            onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))}
+            gallery={formData.gallery}
+            onGalleryChange={(newGallery) => {
+              setFormData((prev) => ({
+                ...prev,
+                gallery: newGallery
+              }));
+            }}
+            maxGallerySlots={4}
             label="Product Gift Image"
             recommendedDimensions="800 × 800 px"
             aspectRatio="1:1 (square)"
-          />
-          {errors.image && <p className="text-xs text-error mt-1">{errors.image}</p>}
-
-
-          <div className="flex items-center justify-end gap-3 pt-3 pb-2 mt-4">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-5 py-2.5 rounded-xl border border-soft-gray/25 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2.5 rounded-xl bg-primary text-surface text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-            >
-              {editingProduct ? 'Save Changes' : 'Create Gift Product'}
-            </button>
-          </div>
-        </form>
+          >
+            <div className="flex items-center justify-end gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl border border-soft-gray/25 text-sm font-medium text-charcoal hover:border-primary hover:text-primary transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-primary text-surface text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer whitespace-nowrap"
+              >
+                {editingProduct ? 'Save Changes' : 'Create Gift Product'}
+              </button>
+            </div>
+          </CloudinaryUpload>
+          {errors.image && <p className="text-xs text-error mt-1">{errors.image}</p>}</form>
       </Modal>
 
       <ConfirmDialog

@@ -372,6 +372,7 @@ export const AdminProvider = ({ children }) => {
                 _id: r._id,
                 productId: r.product?._id || r.product || '',
                 productTitle: r.product?.title || r.product?.name || 'Gift Item',
+                productImage: r.product?.image || (Array.isArray(r.product?.gallery) && r.product.gallery[0]) || '',
                 customerName: cName,
                 rating: r.rating,
                 comment: r.comment,
@@ -458,8 +459,14 @@ export const AdminProvider = ({ children }) => {
     if (rawId.length !== 6 || usedIds.has(rawId)) {
       rawId = generateNextUniqueProductId(state.products);
     }
+    const galleryImages = Array.isArray(productData.gallery) && productData.gallery.length > 0
+      ? productData.gallery.filter(Boolean)
+      : (productData.image ? [productData.image] : []);
+    const primaryImage = productData.image || galleryImages[0] || '';
     const payload = {
       ...productData,
+      image: primaryImage,
+      gallery: galleryImages,
       productId: rawId,
       sku: rawId,
       price: Number(productData.price) || 0,

@@ -74,6 +74,40 @@ export const uploadToCloudinary = async (file, cloudName, uploadPreset) => {
   });
 };
 
+export const uploadMultipleFiles = async (files, cloudName, uploadPreset) => {
+  if (!files || files.length === 0) return [];
+  const fileArray = Array.from(files);
+  const validFiles = fileArray.filter((file) => validateImageFile(file).valid);
+  if (validFiles.length === 0) return [];
+
+  // 1. Primary: Try backend /api/upload/multiple
+  try {
+    const formData = new FormData();
+    validFiles.forEach((file) => {
+      formData.append('images', file);
+    });
+    const backendRes = await fetch(`${API_BASE_URL}/upload/multiple`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (backendRes.ok) {
+      const data = await backendRes.json();
+      if (data && Array.isArray(data.urls) && data.urls.length > 0) {
+        return data.urls;
+      }
+    }
+  } catch (backendErr) {
+    console.warn('Backend /upload/multiple route failed, trying single uploads fallback...', backendErr);
+  }
+
+  // 2. Fallback: Upload files concurrently via uploadToCloudinary
+  const uploadPromises = validFiles.map((file) =>
+    uploadToCloudinary(file, cloudName, uploadPreset)
+  );
+  const results = await Promise.all(uploadPromises);
+  return results.map((r) => r.url).filter(Boolean);
+};
+
 export const validateImageFile = (file, maxMb = 5) => {
   const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   if (!validTypes.includes(file.type)) {
@@ -84,4 +118,10 @@ export const validateImageFile = (file, maxMb = 5) => {
     return { valid: false, error: `Image size must be under ${maxMb}MB.` };
   }
   return { valid: true };
+};
+
+export default {
+  uploadToCloudinary,
+  uploadMultipleFiles,
+  validateImageFile,
 };

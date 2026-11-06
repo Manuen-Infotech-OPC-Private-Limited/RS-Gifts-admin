@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Star, CheckCircle, EyeOff, Eye, Trash2, Search, MessageSquare, AlertCircle, Check } from 'lucide-react';
+import { Star, CheckCircle, EyeOff, Eye, Trash2, Search, MessageSquare, AlertCircle, Check, Package } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Badge } from '../common/Badge';
 
 export const ReviewsModule = () => {
-  const { reviews, approveReview, hideReview, deleteReview } = useAdmin();
+  const { reviews, approveReview, hideReview, deleteReview, products = [] } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -112,6 +112,13 @@ export const ReviewsModule = () => {
         {filteredReviews.map((review) => {
           const isVisible = review.status === 'approved' || review.isApproved === true;
           const reviewId = review.id || review._id;
+          const matchedProduct = (products || []).find((p) => {
+            const pid = review.productId || review.product?._id || review.product?.id || review.product;
+            if (pid && (p.id === pid || p._id === pid)) return true;
+            if (review.productTitle && p.title && p.title.trim().toLowerCase() === review.productTitle.trim().toLowerCase()) return true;
+            return false;
+          });
+          const productImage = review.productImage || review.product?.image || matchedProduct?.image || matchedProduct?.gallery?.[0] || '';
 
           return (
             <div
@@ -119,8 +126,8 @@ export const ReviewsModule = () => {
               className="bg-surface p-5 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col justify-between transition-all hover:border-soft-gray/40"
             >
               <div>
-                {/* Card Header: Product Title & Status Badge */}
-                <div className="flex items-start justify-between gap-3 pb-3 border-b border-soft-gray/10">
+                {/* Card Header: Product Title, Rating & Product Image */}
+                <div className="flex items-start justify-between gap-4 pb-2">
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] font-semibold uppercase text-primary tracking-wider block">
                       Product
@@ -141,17 +148,33 @@ export const ReviewsModule = () => {
                       </div>
                       <span className="text-xs text-soft-gray">• {review.date || 'Recent'}</span>
                     </div>
+
+                    {!isVisible && (
+                      <span className="inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-neutral-100 text-neutral-600 border border-neutral-200">
+                        Hidden from Website
+                      </span>
+                    )}
                   </div>
 
-                  <span
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
-                      isVisible
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
-                    }`}
-                  >
-                    {isVisible ? 'Visible on Website' : 'Hidden from Website'}
-                  </span>
+                  {/* Product Image Thumbnail in Top Right */}
+                  <div className="shrink-0">
+                    {productImage ? (
+                      <img
+                        src={productImage}
+                        alt={review.productTitle || 'Product'}
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-soft-gray/25 shadow-xs bg-warm-ivory/30"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://images.unsplash.com/photo-1549465220-1a8b9238cdcd?w=200';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-dashed border-soft-gray/30 bg-warm-ivory/20 flex flex-col items-center justify-center text-soft-gray">
+                        <Package className="w-6 h-6 text-soft-gray/50" />
+                        <span className="text-[9px] mt-0.5 font-medium">No Image</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Review Body */}
@@ -169,7 +192,7 @@ export const ReviewsModule = () => {
               </div>
 
               {/* Card Footer: Reviewer Info & Moderate Actions */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-soft-gray/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                 <div>
                   <div className="text-xs font-bold text-charcoal">
                     {review.customerName || 'Verified Customer'}
