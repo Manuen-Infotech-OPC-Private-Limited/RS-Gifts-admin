@@ -9,8 +9,6 @@ import {
   ExternalLink,
   Truck,
   IndianRupee,
-  CheckCircle2,
-  Sparkles,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
@@ -72,9 +70,6 @@ export const SettingsModule = () => {
     });
   };
 
-  const currentStandardFee = Number(formData.standardShippingFee) || 0;
-  const currentThreshold = Number(formData.freeShippingThreshold) || 0;
-
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl pb-10">
       <div>
@@ -98,14 +93,6 @@ export const SettingsModule = () => {
                   Configure delivery charges applied across all products on RS Gifts customer checkout.
                 </p>
               </div>
-            </div>
-
-            {/* Quick Status Pill */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>
-                {currentStandardFee === 0 ? 'Free Delivery Active' : `Standard Delivery: ₹${currentStandardFee}`}
-              </span>
             </div>
           </div>
 
@@ -162,34 +149,11 @@ export const SettingsModule = () => {
                   className="w-full pl-8 pr-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal font-medium"
                 />
               </div>
-              <p className="text-[11px] text-soft-gray leading-relaxed">
-                Orders equal to or above this amount get Free Delivery. Enter <strong className="text-charcoal">0</strong> to disable threshold (charge standard fee always).
-              </p>
-            </div>
-          </div>
-
-          {/* Dynamic Explanatory Alert */}
-          <div className="p-3.5 rounded-xl bg-charcoal/5 border border-soft-gray/20 flex items-start gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-charcoal leading-relaxed">
-              {currentStandardFee === 0 ? (
-                <span>
-                  <strong className="text-green-700">Free Delivery Mode:</strong> All products across your store will display <strong>Estimated Delivery: FREE</strong> and customers will not be charged any shipping fee.
-                </span>
-              ) : currentThreshold > 0 ? (
-                <span>
-                  <strong className="text-primary">Standard Shipping Active:</strong> Orders below <strong>₹{currentThreshold}</strong> will have <strong>₹{currentStandardFee}</strong> delivery charge added. Orders of <strong>₹{currentThreshold}</strong> or more get <strong>FREE delivery</strong>.
-                </span>
-              ) : (
-                <span>
-                  <strong className="text-primary">Flat Delivery Active:</strong> Every order across all products will be charged a standard delivery fee of <strong>₹{currentStandardFee}</strong>.
-                </span>
-              )}
             </div>
           </div>
 
           {/* Save Button for Delivery */}
-          <div className="pt-2 flex items-center justify-end border-t border-soft-gray/15">
+          <div className="flex items-center justify-end">
             <button
               type="button"
               onClick={handleSaveDelivery}
