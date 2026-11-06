@@ -887,7 +887,7 @@ export const AdminProvider = ({ children }) => {
         (inq.id === inquiryId || inq._id === inquiryId) ? { ...inq, status: newStatus } : inq
       )
     }));
-    showToast(`Inquiry marked as ${newStatus}.`);
+    showToast(`Enquiry marked as ${newStatus}.`);
 
     try {
       await apiClient.patch(`/admin/inquiries/${inquiryId}/status`, { status: newStatus });
@@ -901,7 +901,7 @@ export const AdminProvider = ({ children }) => {
       ...prev,
       inquiries: (prev.inquiries || []).filter(inq => inq.id !== inquiryId && inq._id !== inquiryId)
     }));
-    showToast('Customer inquiry deleted.');
+    showToast('Customer enquiry deleted.');
 
     try {
       await apiClient.delete(`/admin/inquiries/${inquiryId}`);

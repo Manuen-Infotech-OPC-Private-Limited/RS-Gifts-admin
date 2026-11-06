@@ -62,9 +62,9 @@ export const InquiriesModule = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-charcoal tracking-tight">Customer Inquiries & Messages</h1>
+        <h1 className="text-2xl font-bold text-charcoal tracking-tight">Customer Enquiries & Messages</h1>
         <p className="text-sm text-soft-gray mt-1">
-          Review customer inquiries, custom order consultations, and contact submissions from the storefront.
+          Review customer enquiries, custom order consultations, and contact submissions from the storefront.
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export const InquiriesModule = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search inquiries by customer name, email, phone, or keyword..."
+            placeholder="Search enquiries by customer name, email, phone, or keyword..."
             className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-soft-gray/25 bg-warm-ivory/40 text-charcoal placeholder-soft-gray focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -98,7 +98,7 @@ export const InquiriesModule = () => {
         </div>
       </div>
 
-      {/* Inquiries Table */}
+      {/* Enquiries Table */}
       <div className="bg-surface rounded-2xl border border-soft-gray/20 shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-charcoal">
@@ -131,7 +131,7 @@ export const InquiriesModule = () => {
                   </td>
 
                   <td className="px-6 py-4 max-w-sm">
-                    <div className="font-semibold text-charcoal text-xs">{inquiry.subject || 'General Inquiry'}</div>
+                    <div className="font-semibold text-charcoal text-xs">{inquiry.subject || 'General Enquiry'}</div>
                     <div className="text-xs text-soft-gray line-clamp-1 mt-0.5">
                       {inquiry.message}
                     </div>
@@ -170,7 +170,7 @@ export const InquiriesModule = () => {
                       </button>
 
                       <a
-                        href={`mailto:${inquiry.email}?subject=Regarding your RS Gifts Inquiry: ${encodeURIComponent(inquiry.subject || '')}`}
+                        href={`mailto:${inquiry.email}?subject=Regarding your RS Gifts Enquiry: ${encodeURIComponent(inquiry.subject || '')}`}
                         className="p-2 rounded-xl text-soft-gray hover:text-primary hover:bg-warm-ivory transition-colors cursor-pointer"
                         title="Reply via Email"
                       >
@@ -192,7 +192,7 @@ export const InquiriesModule = () => {
                       <button
                         onClick={() => handleDelete(inquiry.id || inquiry._id)}
                         className="p-2 rounded-xl text-soft-gray hover:text-error hover:bg-warm-ivory transition-colors cursor-pointer"
-                        title="Delete Inquiry"
+                        title="Delete Enquiry"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -205,8 +205,8 @@ export const InquiriesModule = () => {
                 <tr>
                   <td colSpan="5" className="text-center py-12 text-sm text-soft-gray">
                     {inquiries.length === 0
-                      ? 'No customer inquiries received yet. Inquiries submitted via the Contact Us page will appear here.'
-                      : 'No inquiries match the current search or status filter.'}
+                      ? 'No customer enquiries received yet. Enquiries submitted via the Contact Us page will appear here.'
+                      : 'No enquiries match the current search or status filter.'}
                   </td>
                 </tr>
               )}
@@ -215,12 +215,12 @@ export const InquiriesModule = () => {
         </div>
       </div>
 
-      {/* Inquiry Detail Modal */}
+      {/* Enquiry Detail Modal */}
       {selectedInquiry && (
         <Modal
           isOpen={!!selectedInquiry}
           onClose={() => setSelectedInquiry(null)}
-          title={`Inquiry from ${selectedInquiry.fullName}`}
+          title={`Enquiry from ${selectedInquiry.fullName}`}
           maxWidth="max-w-xl"
         >
           <div className="space-y-5">
@@ -256,7 +256,7 @@ export const InquiriesModule = () => {
             {/* Subject & Message Content */}
             <div className="space-y-2">
               <span className="text-xs font-bold uppercase tracking-wider text-charcoal">
-                Subject: {selectedInquiry.subject || 'General Inquiry'}
+                Subject: {selectedInquiry.subject || 'General Enquiry'}
               </span>
               <div className="p-4 rounded-2xl border border-soft-gray/20 bg-surface text-charcoal text-xs leading-relaxed whitespace-pre-wrap">
                 {selectedInquiry.message}
@@ -266,7 +266,7 @@ export const InquiriesModule = () => {
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-2 pt-2">
               <a
-                href={`mailto:${selectedInquiry.email}?subject=Regarding your RS Gifts Inquiry: ${encodeURIComponent(selectedInquiry.subject || '')}`}
+                href={`mailto:${selectedInquiry.email}?subject=Regarding your RS Gifts Enquiry: ${encodeURIComponent(selectedInquiry.subject || '')}`}
                 onClick={() => handleStatusChange('Replied')}
                 className="px-3.5 py-1.5 rounded-xl bg-primary text-surface text-xs font-semibold hover:bg-primary/90 flex items-center gap-1.5 transition-colors"
               >
@@ -291,7 +291,7 @@ export const InquiriesModule = () => {
         </Modal>
       )}
 
-      {/* Delete Inquiry Confirmation Dialog */}
+      {/* Delete Enquiry Confirmation Dialog */}
       <ConfirmDialog
         isOpen={!!inquiryToDelete}
         onClose={() => setInquiryToDelete(null)}
@@ -304,9 +304,9 @@ export const InquiriesModule = () => {
             setInquiryToDelete(null);
           }
         }}
-        title="Delete Inquiry"
-        message="Are you sure you want to delete this customer inquiry? This cannot be undone."
-        confirmText="Delete Inquiry"
+        title="Delete Enquiry"
+        message="Are you sure you want to delete this customer enquiry? This cannot be undone."
+        confirmText="Delete Enquiry"
       />
     </div>
   );

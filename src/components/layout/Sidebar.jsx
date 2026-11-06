@@ -61,7 +61,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
     { path: '/reviews', label: 'Reviews', icon: Star },
     { 
       path: '/inquiries', 
-      label: 'Inquiries', 
+      label: 'Enquiries', 
       icon: MessageSquare, 
       badge: unreadInquiriesCount > 0 ? `${unreadInquiriesCount} New` : null,
       badgeVariant: 'primary' 
