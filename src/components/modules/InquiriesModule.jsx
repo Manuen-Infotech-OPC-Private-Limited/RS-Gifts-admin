@@ -15,6 +15,7 @@ import {
 import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 export const InquiriesModule = () => {
   const { inquiries = [], updateInquiryStatus, deleteInquiry } = useAdmin();
@@ -22,6 +23,7 @@ export const InquiriesModule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedInquiry, setSelectedInquiry] = useState(null);
+  const [inquiryToDelete, setInquiryToDelete] = useState(null);
 
   const handleOpenDetail = (inquiry) => {
     setSelectedInquiry(inquiry);
@@ -39,12 +41,7 @@ export const InquiriesModule = () => {
   };
 
   const handleDelete = (inquiryId) => {
-    if (window.confirm('Are you sure you want to delete this customer inquiry?')) {
-      deleteInquiry(inquiryId);
-      if (selectedInquiry && (selectedInquiry.id === inquiryId || selectedInquiry._id === inquiryId)) {
-        setSelectedInquiry(null);
-      }
-    }
+    setInquiryToDelete(inquiryId);
   };
 
   const filteredInquiries = inquiries.filter((inq) => {
@@ -306,6 +303,24 @@ export const InquiriesModule = () => {
           </div>
         </Modal>
       )}
+
+      {/* Delete Inquiry Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!inquiryToDelete}
+        onClose={() => setInquiryToDelete(null)}
+        onConfirm={() => {
+          if (inquiryToDelete) {
+            deleteInquiry(inquiryToDelete);
+            if (selectedInquiry && (selectedInquiry.id === inquiryToDelete || selectedInquiry._id === inquiryToDelete)) {
+              setSelectedInquiry(null);
+            }
+            setInquiryToDelete(null);
+          }
+        }}
+        title="Delete Inquiry"
+        message="Are you sure you want to delete this customer inquiry? This cannot be undone."
+        confirmText="Delete Inquiry"
+      />
     </div>
   );
 };

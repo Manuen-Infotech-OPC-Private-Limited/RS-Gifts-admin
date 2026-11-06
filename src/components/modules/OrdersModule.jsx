@@ -12,6 +12,7 @@ import {
 import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 const formatShippingAddress = (addr) => {
   if (!addr) return 'Standard Delivery Address';
@@ -64,6 +65,7 @@ export const OrdersModule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   const handleOpenDetail = (order) => {
     setSelectedOrder(order);
@@ -84,12 +86,7 @@ export const OrdersModule = () => {
   };
 
   const handleDeleteOrder = (orderId) => {
-    if (window.confirm(`Are you sure you want to delete order #${orderId}?`)) {
-      deleteOrder(orderId);
-      if (selectedOrder && (selectedOrder.id === orderId || selectedOrder._id === orderId)) {
-        setSelectedOrder(null);
-      }
-    }
+    setOrderToDelete(orderId);
   };
 
   const filteredOrders = orders.filter((o) => {
@@ -433,6 +430,24 @@ export const OrdersModule = () => {
           </div>
         </Modal>
       )}
+
+      {/* Delete Order Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!orderToDelete}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={() => {
+          if (orderToDelete) {
+            deleteOrder(orderToDelete);
+            if (selectedOrder && (selectedOrder.id === orderToDelete || selectedOrder._id === orderToDelete)) {
+              setSelectedOrder(null);
+            }
+            setOrderToDelete(null);
+          }
+        }}
+        title="Delete Order"
+        message={`Are you sure you want to delete order #${orderToDelete}? This cannot be undone.`}
+        confirmText="Delete Order"
+      />
     </div>
   );
 };
