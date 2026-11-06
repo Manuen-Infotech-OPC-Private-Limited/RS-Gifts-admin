@@ -263,42 +263,29 @@ export const InquiriesModule = () => {
               </div>
             </div>
 
-            {/* Status Selector */}
-            <div className="flex items-center justify-between pt-2 border-t border-soft-gray/20">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-charcoal">Update Status:</span>
-                <select
-                  value={selectedInquiry.status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl border border-soft-gray/25 bg-surface text-xs font-semibold text-charcoal focus:border-primary cursor-pointer"
-                >
-                  <option value="Unread">Unread</option>
-                  <option value="Read">Read</option>
-                  <option value="Replied">Replied</option>
-                </select>
-              </div>
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <a
+                href={`mailto:${selectedInquiry.email}?subject=Regarding your RS Gifts Inquiry: ${encodeURIComponent(selectedInquiry.subject || '')}`}
+                onClick={() => handleStatusChange('Replied')}
+                className="px-3.5 py-1.5 rounded-xl bg-primary text-surface text-xs font-semibold hover:bg-primary/90 flex items-center gap-1.5 transition-colors"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Reply Email</span>
+              </a>
 
-              <div className="flex items-center gap-2">
+              {selectedInquiry.phone && (
                 <a
-                  href={`mailto:${selectedInquiry.email}?subject=Regarding your RS Gifts Inquiry: ${encodeURIComponent(selectedInquiry.subject || '')}`}
-                  className="px-3.5 py-1.5 rounded-xl bg-primary text-surface text-xs font-semibold hover:bg-primary/90 flex items-center gap-1.5 transition-colors"
+                  href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(selectedInquiry.fullName)},%20thank%20you%20for%20reaching%20out%20to%20RS%20Gifts!`}
+                  onClick={() => handleStatusChange('Replied')}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-surface text-xs font-semibold hover:bg-emerald-700 flex items-center gap-1.5 transition-colors"
                 >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Reply Email</span>
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WhatsApp</span>
                 </a>
-
-                {selectedInquiry.phone && (
-                  <a
-                    href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(selectedInquiry.fullName)},%20thank%20you%20for%20reaching%20out%20to%20RS%20Gifts!`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-surface text-xs font-semibold hover:bg-emerald-700 flex items-center gap-1.5 transition-colors"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>WhatsApp</span>
-                  </a>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </Modal>
