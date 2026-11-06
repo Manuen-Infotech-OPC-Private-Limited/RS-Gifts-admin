@@ -209,96 +209,90 @@ export const SettingsModule = () => {
             <div>
               <h3 className="text-base font-bold text-charcoal">Contact Us</h3>
               <p className="text-xs text-soft-gray">
-                Edit phone numbers, email addresses, store location, working hours, and Google Maps embed displayed on the customer website footer & contact page.
+                Manage store contact details displayed on the website and footer.
               </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            {/* Phone & Email */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                  <Phone className="w-3.5 h-3.5 text-primary" />
-                  Customer Support Phone
-                </label>
-                <input
-                  type="text"
-                  value={formData.contactPhone || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
-                  placeholder="+91 98765 43210"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                  <Mail className="w-3.5 h-3.5 text-primary" />
-                  Support Email Address
-                </label>
-                <input
-                  type="email"
-                  value={formData.contactEmail || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
-                  placeholder="support@rsgifts.in"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Phone Number */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-semibold text-charcoal">
+                <Phone className="w-3.5 h-3.5 text-primary" />
+                Phone Number
+              </label>
+              <input
+                type="text"
+                value={formData.contactPhone || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                placeholder="+91 98765 43210"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal placeholder:text-soft-gray/60"
+              />
             </div>
 
-            {/* Store Location */}
+            {/* Email Address */}
             <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+              <label className="flex items-center gap-2 text-xs font-semibold text-charcoal">
+                <Mail className="w-3.5 h-3.5 text-primary" />
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={formData.contactEmail || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
+                placeholder="support@rsgifts.in"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal placeholder:text-soft-gray/60"
+              />
+            </div>
+
+            {/* Store Address */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-semibold text-charcoal">
                 <MapPin className="w-3.5 h-3.5 text-primary" />
-                Store Location / Address
+                Address
               </label>
               <input
                 type="text"
                 value={formData.storeAddress || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, storeAddress: e.target.value }))}
                 placeholder="Guntur, Andhra Pradesh"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal placeholder:text-soft-gray/60"
               />
             </div>
 
             {/* Working Hours */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  Customer Support Hours
-                </label>
-                <input
-                  type="text"
-                  value={formData.supportHours || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, supportHours: e.target.value }))}
-                  placeholder="Mon - Sat: 9:00 AM - 8:00 PM"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-2 text-xs font-semibold text-charcoal">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                Support Hours
+              </label>
+              <input
+                type="text"
+                value={formData.supportHours || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, supportHours: e.target.value }))}
+                placeholder="Mon - Sun: 9:00 AM - 10:00 PM"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal placeholder:text-soft-gray/60"
+              />
             </div>
 
             {/* Google Maps Embed / Navigation URL */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                <MapPin className="w-3.5 h-3.5 text-primary" />
-                Google Navigation / Map Embed URL (Optional)
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="flex items-center gap-2 text-xs font-semibold text-charcoal">
+                <Globe className="w-3.5 h-3.5 text-primary" />
+                Google Maps Link (Optional)
               </label>
               <input
                 type="text"
                 value={formData.googleMapUrl || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, googleMapUrl: e.target.value }))}
-                placeholder="https://www.google.com/maps/embed?pb=... (Leave empty to keep blank)"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                placeholder="https://maps.app.goo.gl/... (Leave empty if none)"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal placeholder:text-soft-gray/60"
               />
-              <p className="text-[11px] text-soft-gray">
-                Paste your Google Maps embed iframe link or navigation URL here. If left empty, it will display as empty on the Contact page.
-              </p>
             </div>
           </div>
 
           {/* Action Button */}
-          <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
             <span className="text-xs text-soft-gray">
               Changes update the website contact page and footer in real-time.
             </span>
@@ -353,7 +347,7 @@ export const SettingsModule = () => {
               <div>
                 <h3 className="text-base font-bold text-charcoal">Social Media Links</h3>
                 <p className="text-xs text-soft-gray">
-                  Configure dynamic URLs for customer storefront footer. Empty links will remain non-clickable.
+                  Add your social media links here
                 </p>
               </div>
             </div>
