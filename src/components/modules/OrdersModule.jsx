@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ShoppingBag,
   Search,
@@ -282,12 +281,12 @@ export const OrdersModule = () => {
                         updatePaymentStatus(targetId, e.target.value);
                       }}
                       className={`px-2.5 py-1 rounded-xl text-xs font-semibold border cursor-pointer outline-none transition-all shadow-xs ${order.paymentStatus === 'Paid'
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                          : order.paymentStatus === 'Failed'
-                            ? 'bg-red-50 text-red-800 border-red-300'
-                            : order.paymentStatus === 'Refunded'
-                              ? 'bg-gray-100 text-gray-800 border-gray-300'
-                              : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                        : order.paymentStatus === 'Failed'
+                          ? 'bg-red-50 text-red-800 border-red-300'
+                          : order.paymentStatus === 'Refunded'
+                            ? 'bg-gray-100 text-gray-800 border-gray-300'
+                            : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
                         }`}
                       title="Click to update Payment Status"
                     >
@@ -404,12 +403,12 @@ export const OrdersModule = () => {
                     value={selectedOrder.paymentStatus || 'Pending'}
                     onChange={(e) => handlePaymentStatusChange(e.target.value)}
                     className={`px-3 py-1.5 rounded-xl border text-xs font-semibold focus:border-primary cursor-pointer transition-all ${selectedOrder.paymentStatus === 'Paid'
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                        : selectedOrder.paymentStatus === 'Failed'
-                          ? 'bg-red-50 text-red-800 border-red-300'
-                          : selectedOrder.paymentStatus === 'Refunded'
-                            ? 'bg-gray-100 text-gray-800 border-gray-300'
-                            : 'bg-amber-50 text-amber-800 border-amber-300'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                      : selectedOrder.paymentStatus === 'Failed'
+                        ? 'bg-red-50 text-red-800 border-red-300'
+                        : selectedOrder.paymentStatus === 'Refunded'
+                          ? 'bg-gray-100 text-gray-800 border-gray-300'
+                          : 'bg-amber-50 text-amber-800 border-amber-300'
                       }`}
                   >
                     <option value="Pending">Pending</option>
@@ -689,11 +688,10 @@ export const OrdersModule = () => {
                           key={gIdx}
                           type="button"
                           onClick={() => setActivePreviewImage(imgUrl)}
-                          className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
-                            activePreviewImage === imgUrl
+                          className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${activePreviewImage === imgUrl
                               ? 'border-primary ring-2 ring-primary/20 scale-105'
                               : 'border-soft-gray/25 opacity-70 hover:opacity-100'
-                          }`}
+                            }`}
                         >
                           <img src={imgUrl} alt={`Thumbnail ${gIdx + 1}`} className="w-full h-full object-cover" />
                         </button>
@@ -747,7 +745,7 @@ export const OrdersModule = () => {
                 {/* Price Information */}
                 <div className="p-3.5 rounded-xl bg-warm-ivory/60 border border-soft-gray/20 flex items-center justify-between">
                   <div>
-                    <span className="text-xs text-soft-gray uppercase font-semibold block">Store Price</span>
+                    <span className="text-xs text-soft-gray uppercase font-semibold block">Price</span>
                     <div className="flex items-baseline gap-2 mt-0.5">
                       <span className="text-2xl font-bold text-charcoal">
                         {settings.currencySymbol || '₹'}{previewProduct.price}
@@ -796,24 +794,6 @@ export const OrdersModule = () => {
                   <div className="p-3.5 rounded-xl bg-surface border border-soft-gray/20 text-xs sm:text-sm text-charcoal leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">
                     {previewProduct.description || 'No description added yet for this product.'}
                   </div>
-                </div>
-
-                {/* Direct link to edit this product in products module */}
-                <div className="pt-2 border-t border-soft-gray/15 flex items-center justify-between">
-                  <Link
-                    to="/products"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer"
-                  >
-                    <span>Manage in Products Catalog</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewProduct(null)}
-                    className="px-4 py-1.5 rounded-xl bg-warm-ivory text-xs font-semibold text-charcoal hover:bg-warm-ivory/80 cursor-pointer"
-                  >
-                    Close
-                  </button>
                 </div>
               </div>
             </div>
