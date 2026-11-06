@@ -172,7 +172,7 @@ export const SettingsModule = () => {
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-charcoal">Store Logo</h3>
+              <h3 className="text-base font-bold text-charcoal">Logo</h3>
               <p className="text-xs text-soft-gray">Logo visible on the top navigation and footer</p>
             </div>
           </div>
@@ -203,7 +203,7 @@ export const SettingsModule = () => {
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-charcoal">Footer Social Media Links</h3>
+                <h3 className="text-base font-bold text-charcoal">Social Media Links</h3>
                 <p className="text-xs text-soft-gray">
                   Configure dynamic URLs for customer storefront footer. Empty links will remain non-clickable.
                 </p>
@@ -303,7 +303,7 @@ export const SettingsModule = () => {
             </div>
           </div>
 
-          <div className="pt-2 flex items-center justify-between flex-wrap gap-3 border-t border-soft-gray/15">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <p className="text-xs text-soft-gray">
               Note: If you leave a link empty, that icon in the footer will not redirect anywhere.
             </p>
