@@ -285,8 +285,24 @@ export const DashboardModule = () => {
                     <div className="font-medium text-charcoal">{order.customerName}</div>
                     <div className="text-xs text-soft-gray">{order.customerEmail}</div>
                   </td>
-                  <td className="px-6 py-4 text-soft-gray text-xs">
-                    {order.items?.length || 0} gift item{(order.items?.length || 0) > 1 ? 's' : ''}
+                  <td className="px-6 py-4 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg overflow-hidden border border-soft-gray/20 bg-warm-ivory shrink-0 flex items-center justify-center">
+                        {order.items?.[0]?.image ? (
+                          <img
+                            src={order.items[0]?.image}
+                            alt={order.items[0]?.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <Gift className="w-4 h-4 text-primary" />
+                        )}
+                      </div>
+                      <div className="truncate max-w-[140px] font-medium text-charcoal">
+                        {order.items?.[0]?.title || `${order.items?.length || 0} items`}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 font-semibold text-charcoal">
                     {settings.currencySymbol || '₹'}{order.totalAmount}

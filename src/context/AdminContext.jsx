@@ -409,7 +409,25 @@ export const AdminProvider = ({ children }) => {
             orderStatus: o.orderStatus || 'Pending',
             paymentStatus: o.paymentStatus || 'Pending',
             shippingAddress: o.shippingAddress || {},
-            items: o.items || [],
+            items: (o.items || []).map(item => {
+              const prodRef = item.product && typeof item.product === 'object' ? item.product : null;
+              const fallbackProduct = (state.products || []).find(p =>
+                (item.product && (p._id === item.product || p.id === item.product)) ||
+                (item.productId && (p.productId === item.productId || p.sku === item.productId)) ||
+                (item.title && p.title?.toLowerCase() === item.title?.toLowerCase())
+              );
+              return {
+                ...item,
+                title: item.title || prodRef?.title || fallbackProduct?.title || 'Gift Item',
+                image: item.image || prodRef?.image || prodRef?.images?.[0] || fallbackProduct?.image || fallbackProduct?.images?.[0] || '',
+                productId: item.productId || prodRef?.productId || prodRef?.sku || fallbackProduct?.productId || fallbackProduct?.sku || '',
+                sku: item.sku || prodRef?.sku || prodRef?.productId || fallbackProduct?.sku || '',
+                price: item.price ?? prodRef?.price ?? fallbackProduct?.price ?? 0,
+                quantity: item.quantity || 1,
+                category: prodRef?.category || fallbackProduct?.category || '',
+                personalizationData: item.personalizationData || {}
+              };
+            }),
             tracking: o.tracking || { carrier: '', trackingNumber: '', trackingUrl: '' },
             notes: o.notes || '',
             createdAt: o.createdAt,

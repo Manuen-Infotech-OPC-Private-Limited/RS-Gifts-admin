@@ -169,11 +169,39 @@ export const OrdersModule = () => {
                   </td>
 
                   <td className="px-6 py-4 text-xs">
-                    <span className="font-semibold text-charcoal">
-                      {order.items.length} item{order.items.length > 1 ? 's' : ''}
-                    </span>
-                    <div className="text-soft-gray truncate max-w-xs">
-                      {order.items[0]?.title}
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-soft-gray/25 bg-warm-ivory shrink-0 flex items-center justify-center shadow-2xs">
+                        {order.items[0]?.image ? (
+                          <img
+                            src={order.items[0]?.image}
+                            alt={order.items[0]?.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div
+                          className={`w-full h-full bg-primary/10 flex items-center justify-center text-primary ${order.items[0]?.image ? 'hidden' : 'flex'}`}
+                        >
+                          <Gift className="w-5 h-5" />
+                        </div>
+                      </div>
+
+                      <div className="min-w-0">
+                        <div className="font-semibold text-charcoal truncate max-w-[170px]" title={order.items[0]?.title}>
+                          {order.items[0]?.title || 'Gift Item'}
+                        </div>
+                        <div className="text-[11px] text-soft-gray">
+                          Qty: {order.items[0]?.quantity || 1}
+                          {order.items.length > 1 && (
+                            <span className="ml-1 text-primary font-bold">
+                              (+{order.items.length - 1} more)
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </td>
 
@@ -360,71 +388,141 @@ export const OrdersModule = () => {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                <Gift className="w-4 h-4 text-primary" />
-                Ordered Gift Items & Customer Personalizations
-              </h4>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
+                  <Gift className="w-4 h-4 text-primary" />
+                  Ordered Gift Items ({selectedOrder.items?.length || 0})
+                </h4>
+                <span className="text-xs font-semibold text-soft-gray">
+                  Total Items: {selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 0}
+                </span>
+              </div>
 
               <div className="space-y-3">
                 {selectedOrder.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-2xl border border-soft-gray/20 bg-warm-ivory/40 space-y-3"
+                    className="p-4 rounded-2xl border border-soft-gray/20 bg-surface space-y-3 shadow-xs hover:border-primary/40 transition-all"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-charcoal text-sm">{item.title}</p>
-                        <p className="text-xs text-soft-gray">Qty: {item.quantity} × {settings.currencySymbol || '₹'}{item.price}</p>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      {/* Product Thumbnail & Basic Info */}
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-soft-gray/20 bg-warm-ivory/60 shrink-0 flex items-center justify-center shadow-xs">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div
+                            className={`w-full h-full bg-primary/5 flex flex-col items-center justify-center text-primary/60 ${item.image ? 'hidden' : 'flex'}`}
+                          >
+                            <Gift className="w-7 h-7" />
+                            <span className="text-[9px] font-semibold mt-0.5">Gift</span>
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 space-y-1">
+                          <h5 className="font-bold text-charcoal text-sm sm:text-base leading-snug">
+                            {item.title}
+                          </h5>
+                          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                            {(item.productId || item.sku) && (
+                              <span className="font-mono text-[11px] font-bold text-soft-gray bg-warm-ivory px-2 py-0.5 rounded border border-soft-gray/20">
+                                SKU: {item.productId || item.sku}
+                              </span>
+                            )}
+                            {item.category && (
+                              <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                                {item.category}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-soft-gray font-medium">
+                            Unit Price: {settings.currencySymbol || '₹'}{item.price} • Quantity: <span className="font-bold text-charcoal">{item.quantity}</span>
+                          </p>
+                        </div>
                       </div>
-                      <span className="font-bold text-charcoal text-sm">
-                        {settings.currencySymbol || '₹'}{item.quantity * item.price}
-                      </span>
+
+                      {/* Line Item Total */}
+                      <div className="text-right sm:self-center shrink-0">
+                        <span className="text-xs uppercase font-semibold text-soft-gray block">Subtotal</span>
+                        <span className="text-base sm:text-lg font-bold text-primary">
+                          {settings.currencySymbol || '₹'}{item.quantity * item.price}
+                        </span>
+                      </div>
                     </div>
 
+                    {/* Customer Personalization Details */}
                     {item.personalizationData && (
-                      <div className="pt-2 border-t border-soft-gray/15 space-y-1.5 text-xs">
+                      <div className="pt-3 border-t border-soft-gray/15 space-y-2 text-xs">
+                        <span className="text-[11px] uppercase tracking-wider font-bold text-soft-gray block">
+                          Customer Personalizations:
+                        </span>
+
                         {item.personalizationData.customText && (
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-primary">Engraving Text:</span>
-                            <span className="font-medium text-charcoal bg-surface px-2 py-0.5 rounded border border-soft-gray/15">
+                          <div className="flex items-start gap-2 bg-warm-ivory/60 p-2.5 rounded-xl border border-soft-gray/15">
+                            <span className="font-bold text-primary whitespace-nowrap">✨ Name / Engraving:</span>
+                            <span className="font-bold text-charcoal bg-surface px-2 py-0.5 rounded border border-soft-gray/20">
                               "{item.personalizationData.customText}"
                             </span>
                           </div>
                         )}
 
                         {item.personalizationData.giftCardMessage && (
-                          <div className="flex items-start gap-2">
-                            <span className="font-semibold text-primary">Greeting Note:</span>
-                            <span className="italic text-charcoal bg-surface px-2 py-0.5 rounded border border-soft-gray/15">
+                          <div className="flex items-start gap-2 bg-[#FFF9F5] p-2.5 rounded-xl border border-[#F2E5DE]">
+                            <span className="font-bold text-primary whitespace-nowrap">💌 Greeting Note:</span>
+                            <span className="italic text-charcoal leading-relaxed">
                               "{item.personalizationData.giftCardMessage}"
                             </span>
                           </div>
                         )}
 
                         {item.personalizationData.photoUploaded && (
-                          <div className="flex items-center gap-2 pt-1">
-                            <span className="font-semibold text-primary">Customer Photo:</span>
+                          <div className="flex flex-wrap items-center gap-3 bg-warm-ivory/40 p-2.5 rounded-xl border border-soft-gray/15">
+                            <span className="font-bold text-primary">📷 Customer Uploaded Photo:</span>
                             <a
                               href={item.personalizationData.photoUploaded}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-primary hover:underline font-semibold"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-surface text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
                             >
-                              View Uploaded Photo <ExternalLink className="w-3 h-3" />
+                              <span>View & Download Photo</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </div>
                         )}
 
                         {item.personalizationData.giftWrap && (
-                          <div className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent px-2 py-0.5 rounded bg-accent/15">
-                            <Gift className="w-3 h-3" /> Includes Luxury Ribbon Wrap
+                          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-accent bg-accent/15 px-2.5 py-1 rounded-xl">
+                            <Gift className="w-3.5 h-3.5" />
+                            <span>Includes Premium Luxury Ribbon Wrap</span>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
                 ))}
+              </div>
+
+              {/* Order Cost Breakdown Box */}
+              <div className="p-4 rounded-2xl bg-warm-ivory/70 border border-soft-gray/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="space-y-1 text-soft-gray">
+                  <div>Payment Method: <span className="font-semibold text-charcoal">{typeof selectedOrder.paymentMethod === 'string' ? selectedOrder.paymentMethod : 'COD'}</span></div>
+                  <div>Payment Status: <span className={`font-bold ${selectedOrder.paymentStatus === 'Paid' ? 'text-emerald-700' : 'text-amber-600'}`}>{selectedOrder.paymentStatus || 'Pending'}</span></div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-soft-gray block uppercase font-semibold">Total Order Value</span>
+                  <span className="text-xl font-bold text-charcoal">
+                    {settings.currencySymbol || '₹'}{selectedOrder.totalAmount}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
