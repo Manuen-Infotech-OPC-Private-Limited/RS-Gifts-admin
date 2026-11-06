@@ -276,20 +276,6 @@ export const SettingsModule = () => {
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
                 />
               </div>
-
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                  <Clock className="w-3.5 h-3.5 text-primary" />
-                  Alternate / Weekend Hours (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.altSupportHours || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, altSupportHours: e.target.value }))}
-                  placeholder="Sunday: 10:00 AM - 5:00 PM (Leave empty if none)"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
-                />
-              </div>
             </div>
 
             {/* Google Maps Embed / Navigation URL */}
@@ -335,7 +321,7 @@ export const SettingsModule = () => {
             </div>
             <div>
               <h3 className="text-base font-bold text-charcoal">Logo</h3>
-              <p className="text-xs text-soft-gray">Logo visible on the top navigation and footer</p>
+
             </div>
           </div>
 
