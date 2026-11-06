@@ -215,7 +215,7 @@ export const SettingsModule = () => {
           </div>
 
           <div className="space-y-4">
-            {/* Phone Numbers */}
+            {/* Phone & Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
@@ -233,23 +233,6 @@ export const SettingsModule = () => {
 
               <div className="space-y-1.5">
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                  <Phone className="w-3.5 h-3.5 text-primary" />
-                  Alternate Phone (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.altContactPhone || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, altContactPhone: e.target.value }))}
-                  placeholder="+91 98765 43211 (Leave empty if none)"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
-                />
-              </div>
-            </div>
-
-            {/* Email Addresses */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
                   <Mail className="w-3.5 h-3.5 text-primary" />
                   Support Email Address
                 </label>
@@ -258,20 +241,6 @@ export const SettingsModule = () => {
                   value={formData.contactEmail || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
                   placeholder="support@rsgifts.in"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
-                  <Mail className="w-3.5 h-3.5 text-primary" />
-                  Alternate Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  value={formData.altContactEmail || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, altContactEmail: e.target.value }))}
-                  placeholder="info@rsgifts.com (Leave empty if none)"
                   className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
                 />
               </div>
