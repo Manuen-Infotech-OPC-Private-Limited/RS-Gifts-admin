@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShoppingBag,
   Search,
@@ -7,7 +8,14 @@ import {
   Mail,
   Gift,
   ExternalLink,
-  Trash2
+  Trash2,
+  ZoomIn,
+  Download,
+  Tag,
+  Package,
+  Layers,
+  Sparkles,
+  Info
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Badge } from '../common/Badge';
@@ -60,15 +68,57 @@ const getCustomerPhone = (order) => {
 };
 
 export const OrdersModule = () => {
-  const { orders, settings, updateOrderStatus, updatePaymentStatus, deleteOrder } = useAdmin();
+  const { orders, products = [], settings, updateOrderStatus, updatePaymentStatus, deleteOrder } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderToDelete, setOrderToDelete] = useState(null);
+  const [previewProduct, setPreviewProduct] = useState(null);
+  const [activePreviewImage, setActivePreviewImage] = useState('');
+  const [previewCustomerPhoto, setPreviewCustomerPhoto] = useState(null);
 
   const handleOpenDetail = (order) => {
     setSelectedOrder(order);
+  };
+
+  const handleOpenProductPreview = (item) => {
+    if (!item) return;
+    const prodId = item.productId || item.sku || (item.product?._id || item.product?.id || item.product);
+    const found = (products || []).find((p) =>
+      (prodId && (p._id === prodId || p.id === prodId || p.productId === prodId || p.sku === prodId)) ||
+      (item.title && p.title?.toLowerCase() === item.title?.toLowerCase())
+    );
+
+    const gallery = Array.isArray(found?.gallery) && found.gallery.length > 0
+      ? found.gallery
+      : (item.image || found?.image ? [item.image || found?.image] : []);
+
+    const primaryImg = item.image || found?.image || (gallery.length > 0 ? gallery[0] : '');
+    const normalizedGallery = gallery.includes(primaryImg) ? gallery : (primaryImg ? [primaryImg, ...gallery] : []);
+
+    const merged = {
+      ...(found || {}),
+      id: found?.id || found?._id || item.productId || 'prod',
+      title: found?.title || item.title || 'Gift Item',
+      description: found?.description || item.description || 'Handcrafted bespoke gift item from the RS Gifts exclusive collection.',
+      category: found?.category || item.category || 'Gifts',
+      targetPages: found?.targetPages || (found?.targetPage ? [found.targetPage] : ['Gifts']),
+      price: found?.price ?? item.price ?? 0,
+      salePrice: found?.salePrice ?? null,
+      stock: found?.stock !== undefined ? found.stock : 'In Stock',
+      lowStockThreshold: found?.lowStockThreshold || 5,
+      productId: found?.productId || found?.sku || item.productId || item.sku || 'RS-GIFT',
+      image: primaryImg,
+      gallery: normalizedGallery,
+      active: found?.active !== undefined ? found.active : true,
+      orderedQuantity: item.quantity || 1,
+      orderedPrice: item.price || 0,
+      personalizationData: item.personalizationData || null
+    };
+
+    setPreviewProduct(merged);
+    setActivePreviewImage(primaryImg);
   };
 
   const handleStatusChange = (newStatus) => {
@@ -129,8 +179,8 @@ export const OrdersModule = () => {
               key={status}
               onClick={() => setStatusFilter(status)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${statusFilter === status
-                  ? 'bg-primary text-surface shadow-sm'
-                  : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal hover:bg-warm-ivory'
+                ? 'bg-primary text-surface shadow-sm'
+                : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal hover:bg-warm-ivory'
                 }`}
             >
               {status}
@@ -170,12 +220,19 @@ export const OrdersModule = () => {
 
                   <td className="px-6 py-4 text-xs">
                     <div className="flex items-center gap-3">
-                      <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-soft-gray/25 bg-warm-ivory shrink-0 flex items-center justify-center shadow-2xs">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenProductPreview(order.items[0]);
+                        }}
+                        className="relative w-11 h-11 rounded-xl overflow-hidden border border-soft-gray/25 bg-warm-ivory shrink-0 flex items-center justify-center shadow-2xs cursor-pointer group hover:border-primary transition-all"
+                        title="Click to view gift photo and full details"
+                      >
                         {order.items[0]?.image ? (
                           <img
                             src={order.items[0]?.image}
                             alt={order.items[0]?.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
                             onError={(e) => {
                               e.target.style.display = 'none';
                               if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
@@ -187,12 +244,20 @@ export const OrdersModule = () => {
                         >
                           <Gift className="w-5 h-5" />
                         </div>
+                        <div className="absolute inset-0 bg-charcoal/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <ZoomIn className="w-4 h-4" />
+                        </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="font-semibold text-charcoal truncate max-w-[170px]" title={order.items[0]?.title}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenProductPreview(order.items[0])}
+                          className="font-semibold text-charcoal hover:text-primary transition-colors text-left truncate max-w-[170px] block cursor-pointer"
+                          title="Click to view full product details"
+                        >
                           {order.items[0]?.title || 'Gift Item'}
-                        </div>
+                        </button>
                         <div className="text-[11px] text-soft-gray">
                           Qty: {order.items[0]?.quantity || 1}
                           {order.items.length > 1 && (
@@ -216,15 +281,14 @@ export const OrdersModule = () => {
                         const targetId = order._id || order.id;
                         updatePaymentStatus(targetId, e.target.value);
                       }}
-                      className={`px-2.5 py-1 rounded-xl text-xs font-semibold border cursor-pointer outline-none transition-all shadow-xs ${
-                        order.paymentStatus === 'Paid'
+                      className={`px-2.5 py-1 rounded-xl text-xs font-semibold border cursor-pointer outline-none transition-all shadow-xs ${order.paymentStatus === 'Paid'
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
                           : order.paymentStatus === 'Failed'
                             ? 'bg-red-50 text-red-800 border-red-300'
                             : order.paymentStatus === 'Refunded'
                               ? 'bg-gray-100 text-gray-800 border-gray-300'
                               : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                      }`}
+                        }`}
                       title="Click to update Payment Status"
                     >
                       <option value="Pending">Pending</option>
@@ -339,15 +403,14 @@ export const OrdersModule = () => {
                   <select
                     value={selectedOrder.paymentStatus || 'Pending'}
                     onChange={(e) => handlePaymentStatusChange(e.target.value)}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold focus:border-primary cursor-pointer transition-all ${
-                      selectedOrder.paymentStatus === 'Paid'
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold focus:border-primary cursor-pointer transition-all ${selectedOrder.paymentStatus === 'Paid'
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                         : selectedOrder.paymentStatus === 'Failed'
                           ? 'bg-red-50 text-red-800 border-red-300'
                           : selectedOrder.paymentStatus === 'Refunded'
                             ? 'bg-gray-100 text-gray-800 border-gray-300'
                             : 'bg-amber-50 text-amber-800 border-amber-300'
-                    }`}
+                      }`}
                   >
                     <option value="Pending">Pending</option>
                     <option value="Paid">Paid</option>
@@ -408,12 +471,16 @@ export const OrdersModule = () => {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       {/* Product Thumbnail & Basic Info */}
                       <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-soft-gray/20 bg-warm-ivory/60 shrink-0 flex items-center justify-center shadow-xs">
+                        <div
+                          onClick={() => handleOpenProductPreview(item)}
+                          className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-soft-gray/20 bg-warm-ivory/60 shrink-0 flex items-center justify-center shadow-xs cursor-pointer group hover:border-primary transition-all"
+                          title="Click to view full photo and product details"
+                        >
                           {item.image ? (
                             <img
                               src={item.image}
                               alt={item.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               onError={(e) => {
                                 e.target.style.display = 'none';
                                 if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
@@ -426,12 +493,20 @@ export const OrdersModule = () => {
                             <Gift className="w-7 h-7" />
                             <span className="text-[9px] font-semibold mt-0.5">Gift</span>
                           </div>
+                          <div className="absolute inset-0 bg-charcoal/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                            <ZoomIn className="w-5 h-5" />
+                          </div>
                         </div>
 
                         <div className="min-w-0 space-y-1">
-                          <h5 className="font-bold text-charcoal text-sm sm:text-base leading-snug">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenProductPreview(item)}
+                            className="font-bold text-charcoal hover:text-primary transition-colors text-sm sm:text-base leading-snug text-left block cursor-pointer"
+                            title="Click to view full product details"
+                          >
                             {item.title}
-                          </h5>
+                          </button>
                           <div className="flex flex-wrap items-center gap-1.5 text-xs">
                             {(item.productId || item.sku) && (
                               <span className="font-mono text-[11px] font-bold text-soft-gray bg-warm-ivory px-2 py-0.5 rounded border border-soft-gray/20">
@@ -443,6 +518,14 @@ export const OrdersModule = () => {
                                 {item.category}
                               </span>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenProductPreview(item)}
+                              className="text-[11px] font-bold text-primary hover:underline ml-1 inline-flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <span>View Specs</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </button>
                           </div>
                           <p className="text-xs text-soft-gray font-medium">
                             Unit Price: {settings.currencySymbol || '₹'}{item.price} • Quantity: <span className="font-bold text-charcoal">{item.quantity}</span>
@@ -485,24 +568,39 @@ export const OrdersModule = () => {
                         )}
 
                         {item.personalizationData.photoUploaded && (
-                          <div className="flex flex-wrap items-center gap-3 bg-warm-ivory/40 p-2.5 rounded-xl border border-soft-gray/15">
-                            <span className="font-bold text-primary">📷 Customer Uploaded Photo:</span>
-                            <a
-                              href={item.personalizationData.photoUploaded}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-surface text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
+                          <div className="flex flex-wrap items-center justify-between gap-3 bg-warm-ivory/50 p-2.5 rounded-xl border border-soft-gray/15">
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                onClick={() => setPreviewCustomerPhoto(item.personalizationData.photoUploaded)}
+                                className="w-10 h-10 rounded-lg overflow-hidden border border-soft-gray/25 bg-surface shrink-0 cursor-pointer hover:border-primary transition-all group relative"
+                                title="Click to view customer photo"
+                              >
+                                <img
+                                  src={item.personalizationData.photoUploaded}
+                                  alt="Customer Upload"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-charcoal/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                  <ZoomIn className="w-3.5 h-3.5" />
+                                </div>
+                              </div>
+                              <span className="font-bold text-primary">📷 Customer Uploaded Photo</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewCustomerPhoto(item.personalizationData.photoUploaded)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary text-surface text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs cursor-pointer"
                             >
-                              <span>View & Download Photo</span>
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View & Download</span>
+                            </button>
                           </div>
                         )}
 
                         {item.personalizationData.giftWrap && (
                           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-accent bg-accent/15 px-2.5 py-1 rounded-xl">
                             <Gift className="w-3.5 h-3.5" />
-                            <span>Includes Premium Luxury Ribbon Wrap</span>
+                            <span>Includes Premium Luxury Ribbon Packing</span>
                           </div>
                         )}
                       </div>
@@ -546,6 +644,217 @@ export const OrdersModule = () => {
         message={`Are you sure you want to delete order #${orderToDelete}? This cannot be undone.`}
         confirmText="Delete Order"
       />
+
+      {/* Gift Product Details & Image Lightbox Modal */}
+      {previewProduct && (
+        <Modal
+          isOpen={!!previewProduct}
+          onClose={() => setPreviewProduct(null)}
+          title={`Product Details: ${previewProduct.title}`}
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* Left Column: Image Showcase & Gallery */}
+              <div className="space-y-3">
+                <div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-soft-gray/25 bg-warm-ivory/40 flex items-center justify-center shadow-xs">
+                  {activePreviewImage ? (
+                    <img
+                      src={activePreviewImage}
+                      alt={previewProduct.title}
+                      className="w-full h-full object-contain p-2"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`w-full h-full flex flex-col items-center justify-center text-primary/60 bg-primary/5 ${activePreviewImage ? 'hidden' : 'flex'}`}
+                  >
+                    <Gift className="w-14 h-14" />
+                    <span className="text-xs font-semibold mt-2">No Image Available</span>
+                  </div>
+                </div>
+
+                {/* Gallery Thumbnails if multiple images exist */}
+                {previewProduct.gallery && previewProduct.gallery.length > 1 && (
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-soft-gray block mb-1.5">
+                      Product Photo Gallery ({previewProduct.gallery.length})
+                    </span>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                      {previewProduct.gallery.map((imgUrl, gIdx) => (
+                        <button
+                          key={gIdx}
+                          type="button"
+                          onClick={() => setActivePreviewImage(imgUrl)}
+                          className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                            activePreviewImage === imgUrl
+                              ? 'border-primary ring-2 ring-primary/20 scale-105'
+                              : 'border-soft-gray/25 opacity-70 hover:opacity-100'
+                          }`}
+                        >
+                          <img src={imgUrl} alt={`Thumbnail ${gIdx + 1}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activePreviewImage && (
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <span className="text-soft-gray">High-resolution preview</span>
+                    <a
+                      href={activePreviewImage}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                    >
+                      <span>Open Full Size</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Full Specifications configured by Admin */}
+              <div className="space-y-4">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    {previewProduct.category && (
+                      <Badge variant="primary">{previewProduct.category}</Badge>
+                    )}
+                    {typeof previewProduct.stock === 'number' && (
+                      <Badge variant={previewProduct.stock > (previewProduct.lowStockThreshold || 5) ? 'success' : 'accent'}>
+                        {previewProduct.stock > 0 ? `${previewProduct.stock} in stock` : 'Out of stock'}
+                      </Badge>
+                    )}
+                    <Badge variant={previewProduct.active ? 'success' : 'charcoal'}>
+                      {previewProduct.active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-charcoal leading-snug">
+                    {previewProduct.title}
+                  </h3>
+
+                  <div className="flex items-center gap-2 mt-1.5 font-mono text-xs text-soft-gray">
+                    <span>SKU: <strong className="text-charcoal">{previewProduct.productId || previewProduct.sku}</strong></span>
+                  </div>
+                </div>
+
+                {/* Price Information */}
+                <div className="p-3.5 rounded-xl bg-warm-ivory/60 border border-soft-gray/20 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-soft-gray uppercase font-semibold block">Store Price</span>
+                    <div className="flex items-baseline gap-2 mt-0.5">
+                      <span className="text-2xl font-bold text-charcoal">
+                        {settings.currencySymbol || '₹'}{previewProduct.price}
+                      </span>
+                      {previewProduct.originalPrice && previewProduct.originalPrice > previewProduct.price && (
+                        <span className="text-sm line-through text-soft-gray">
+                          {settings.currencySymbol || '₹'}{previewProduct.originalPrice}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {previewProduct.orderedQuantity && (
+                    <div className="text-right border-l border-soft-gray/20 pl-4">
+                      <span className="text-xs text-soft-gray uppercase font-semibold block">In This Order</span>
+                      <span className="text-sm font-bold text-primary">
+                        Qty: {previewProduct.orderedQuantity}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Target Occasion Pages */}
+                {previewProduct.targetPages && previewProduct.targetPages.length > 0 && (
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-soft-gray block mb-1">
+                      Assigned Occasion Pages
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {previewProduct.targetPages.map((page, pIdx) => (
+                        <span
+                          key={pIdx}
+                          className="px-2.5 py-1 rounded-lg bg-surface border border-soft-gray/20 text-xs font-semibold text-charcoal"
+                        >
+                          {page}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Description */}
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-soft-gray block mb-1.5">
+                    Product Description (Configured by Admin)
+                  </span>
+                  <div className="p-3.5 rounded-xl bg-surface border border-soft-gray/20 text-xs sm:text-sm text-charcoal leading-relaxed max-h-48 overflow-y-auto whitespace-pre-line">
+                    {previewProduct.description || 'No description added yet for this product.'}
+                  </div>
+                </div>
+
+                {/* Direct link to edit this product in products module */}
+                <div className="pt-2 border-t border-soft-gray/15 flex items-center justify-between">
+                  <Link
+                    to="/products"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    <span>Manage in Products Catalog</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewProduct(null)}
+                    className="px-4 py-1.5 rounded-xl bg-warm-ivory text-xs font-semibold text-charcoal hover:bg-warm-ivory/80 cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Customer Uploaded Photo Modal */}
+      {previewCustomerPhoto && (
+        <Modal
+          isOpen={!!previewCustomerPhoto}
+          onClose={() => setPreviewCustomerPhoto(null)}
+          title="Customer Uploaded Photo"
+          maxWidth="max-w-xl"
+        >
+          <div className="space-y-4">
+            <div className="rounded-2xl overflow-hidden border border-soft-gray/20 bg-warm-ivory flex items-center justify-center max-h-[70vh]">
+              <img
+                src={previewCustomerPhoto}
+                alt="Customer Uploaded"
+                className="max-h-[65vh] w-auto object-contain"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs text-soft-gray">
+                Provided by customer for gift personalization
+              </span>
+              <a
+                href={previewCustomerPhoto}
+                target="_blank"
+                rel="noreferrer"
+                download="customer-gift-photo"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-surface text-xs font-semibold hover:bg-primary/90 transition-colors shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Open / Download Full Size</span>
+              </a>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
