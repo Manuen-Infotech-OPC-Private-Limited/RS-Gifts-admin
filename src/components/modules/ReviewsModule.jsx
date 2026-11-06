@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, CheckCircle, EyeOff, Eye, Trash2, Search, MessageSquare, AlertCircle, Check, Package } from 'lucide-react';
+import { Star, CheckCircle, EyeOff, Eye, Trash2, Search, MessageSquare, AlertCircle, Check } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Badge } from '../common/Badge';
@@ -21,7 +21,7 @@ export const ReviewsModule = () => {
       (r.productTitle || '').toLowerCase().includes(searchLower) ||
       (r.customerName || '').toLowerCase().includes(searchLower) ||
       (r.comment || '').toLowerCase().includes(searchLower);
-    
+
     const isApproved = r.status === 'approved' || r.isApproved === true;
     const matchesStatus =
       statusFilter === 'ALL' ||
@@ -95,11 +95,10 @@ export const ReviewsModule = () => {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                statusFilter === tab.id
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${statusFilter === tab.id
                   ? 'bg-primary text-surface shadow-sm'
                   : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal'
-              }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -126,9 +125,9 @@ export const ReviewsModule = () => {
               className="bg-surface p-5 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col justify-between transition-all hover:border-soft-gray/40"
             >
               <div>
-                {/* Card Header: Product Title, Rating & Product Image */}
-                <div className="flex items-start justify-between gap-4 pb-2">
-                  <div className="flex-1 min-w-0">
+                {/* Card Header: Product Title & Rating */}
+                <div className="pb-2">
+                  <div className="min-w-0">
                     <span className="text-[11px] font-semibold uppercase text-primary tracking-wider block">
                       Product
                     </span>
@@ -153,26 +152,6 @@ export const ReviewsModule = () => {
                       <span className="inline-flex items-center mt-2 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-neutral-100 text-neutral-600 border border-neutral-200">
                         Hidden from Website
                       </span>
-                    )}
-                  </div>
-
-                  {/* Product Image Thumbnail in Top Right */}
-                  <div className="shrink-0">
-                    {productImage ? (
-                      <img
-                        src={productImage}
-                        alt={review.productTitle || 'Product'}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-soft-gray/25 shadow-xs bg-warm-ivory/30"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = 'https://images.unsplash.com/photo-1549465220-1a8b9238cdcd?w=200';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl border border-dashed border-soft-gray/30 bg-warm-ivory/20 flex flex-col items-center justify-center text-soft-gray">
-                        <Package className="w-6 h-6 text-soft-gray/50" />
-                        <span className="text-[9px] mt-0.5 font-medium">No Image</span>
-                      </div>
                     )}
                   </div>
                 </div>
@@ -238,36 +217,36 @@ export const ReviewsModule = () => {
           );
         })}
 
-        {filteredReviews.length === 0 && (
-          <div className="col-span-1 md:col-span-2 text-center py-16 px-4 bg-surface rounded-2xl border border-soft-gray/20 shadow-xs">
-            <div className="w-12 h-12 rounded-full bg-warm-ivory flex items-center justify-center mx-auto mb-3 text-soft-gray">
-              <MessageSquare className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-base font-bold text-charcoal mb-1">
-              {reviews.length === 0 ? 'No customer reviews yet' : 'No matching reviews found'}
-            </h3>
-            <p className="text-xs text-soft-gray max-w-md mx-auto">
-              {reviews.length === 0
-                ? 'When customers submit reviews on product pages, they will automatically appear here and on the live store.'
-                : 'Try clearing your search or status filter to see other customer reviews.'}
-            </p>
-          </div>
-        )}
-      </div>
+                {filteredReviews.length === 0 && (
+                  <div className="col-span-1 md:col-span-2 text-center py-16 px-4 bg-surface rounded-2xl border border-soft-gray/20 shadow-xs">
+                    <div className="w-12 h-12 rounded-full bg-warm-ivory flex items-center justify-center mx-auto mb-3 text-soft-gray">
+                      <MessageSquare className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-base font-bold text-charcoal mb-1">
+                      {reviews.length === 0 ? 'No customer reviews yet' : 'No matching reviews found'}
+                    </h3>
+                    <p className="text-xs text-soft-gray max-w-md mx-auto">
+                      {reviews.length === 0
+                        ? 'When customers submit reviews on product pages, they will automatically appear here and on the live store.'
+                        : 'Try clearing your search or status filter to see other customer reviews.'}
+                    </p>
+                  </div>
+                )}
+              </div>
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={() => {
-          if (deleteId) {
-            deleteReview(deleteId);
-            setDeleteId(null);
-          }
-        }}
-        title="Delete Customer Review"
-        message="Are you sure you want to permanently remove this customer review? It will be deleted from the database and website."
-      />
-    </div>
-  );
-};
+              {/* Delete Confirmation Dialog */}
+              <ConfirmDialog
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={() => {
+                  if (deleteId) {
+                    deleteReview(deleteId);
+                    setDeleteId(null);
+                  }
+                }}
+                title="Delete Customer Review"
+                message="Are you sure you want to permanently remove this customer review? It will be deleted from the database and website."
+              />
+            </div>
+          );
+        };
