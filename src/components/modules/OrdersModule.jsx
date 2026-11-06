@@ -59,7 +59,7 @@ const getCustomerPhone = (order) => {
 };
 
 export const OrdersModule = () => {
-  const { orders, settings, updateOrderStatus, deleteOrder } = useAdmin();
+  const { orders, settings, updateOrderStatus, updatePaymentStatus, deleteOrder } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -74,6 +74,13 @@ export const OrdersModule = () => {
     const targetId = selectedOrder._id || selectedOrder.id;
     updateOrderStatus(targetId, newStatus);
     setSelectedOrder({ ...selectedOrder, orderStatus: newStatus });
+  };
+
+  const handlePaymentStatusChange = (newPaymentStatus) => {
+    if (!selectedOrder) return;
+    const targetId = selectedOrder._id || selectedOrder.id;
+    updatePaymentStatus(targetId, newPaymentStatus);
+    setSelectedOrder({ ...selectedOrder, paymentStatus: newPaymentStatus });
   };
 
   const handleDeleteOrder = (orderId) => {
@@ -178,9 +185,28 @@ export const OrdersModule = () => {
                   </td>
 
                   <td className="px-6 py-4">
-                    <Badge variant={order.paymentStatus === 'Paid' ? 'success' : 'accent'}>
-                      {order.paymentStatus}
-                    </Badge>
+                    <select
+                      value={order.paymentStatus || 'Pending'}
+                      onChange={(e) => {
+                        const targetId = order._id || order.id;
+                        updatePaymentStatus(targetId, e.target.value);
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-semibold border cursor-pointer outline-none transition-all shadow-xs ${
+                        order.paymentStatus === 'Paid'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                          : order.paymentStatus === 'Failed'
+                            ? 'bg-red-50 text-red-800 border-red-300'
+                            : order.paymentStatus === 'Refunded'
+                              ? 'bg-gray-100 text-gray-800 border-gray-300'
+                              : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                      }`}
+                      title="Click to update Payment Status"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Paid">Paid</option>
+                      <option value="Failed">Failed</option>
+                      <option value="Refunded">Refunded</option>
+                    </select>
                   </td>
 
                   <td className="px-6 py-4">
@@ -236,7 +262,7 @@ export const OrdersModule = () => {
             <div className="flex flex-wrap items-center justify-between p-4 rounded-2xl bg-warm-ivory border border-soft-gray/20 gap-4">
               <div>
                 <span className="text-xs uppercase font-semibold text-soft-gray">Current Status</span>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <Badge
                     variant={
                       selectedOrder.orderStatus === 'Delivered'
@@ -248,7 +274,18 @@ export const OrdersModule = () => {
                             : 'primary'
                     }
                   >
-                    {selectedOrder.orderStatus}
+                    Order: {selectedOrder.orderStatus}
+                  </Badge>
+                  <Badge
+                    variant={
+                      selectedOrder.paymentStatus === 'Paid'
+                        ? 'success'
+                        : selectedOrder.paymentStatus === 'Failed'
+                          ? 'error'
+                          : 'accent'
+                    }
+                  >
+                    Payment: {selectedOrder.paymentStatus || 'Pending'}
                   </Badge>
                   <span className="text-xs text-soft-gray">
                     Ordered on {new Date(selectedOrder.createdAt).toLocaleString()}
@@ -256,19 +293,43 @@ export const OrdersModule = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-semibold text-charcoal">Update Status:</label>
-                <select
-                  value={selectedOrder.orderStatus}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className="px-3 py-1.5 rounded-xl border border-soft-gray/25 bg-surface text-xs font-semibold text-charcoal focus:border-primary"
-                >
-                  <option value="Pending">Pending</option>
-                  <option value="Processing">Processing</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-charcoal whitespace-nowrap">Order Status:</label>
+                  <select
+                    value={selectedOrder.orderStatus}
+                    onChange={(e) => handleStatusChange(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-soft-gray/25 bg-surface text-xs font-semibold text-charcoal focus:border-primary cursor-pointer"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-charcoal whitespace-nowrap">Payment:</label>
+                  <select
+                    value={selectedOrder.paymentStatus || 'Pending'}
+                    onChange={(e) => handlePaymentStatusChange(e.target.value)}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-semibold focus:border-primary cursor-pointer transition-all ${
+                      selectedOrder.paymentStatus === 'Paid'
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : selectedOrder.paymentStatus === 'Failed'
+                          ? 'bg-red-50 text-red-800 border-red-300'
+                          : selectedOrder.paymentStatus === 'Refunded'
+                            ? 'bg-gray-100 text-gray-800 border-gray-300'
+                            : 'bg-amber-50 text-amber-800 border-amber-300'
+                    }`}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Failed">Failed</option>
+                    <option value="Refunded">Refunded</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -292,7 +353,7 @@ export const OrdersModule = () => {
                   {formatShippingAddress(selectedOrder.shippingAddress)}
                 </p>
                 <p className="text-xs text-soft-gray">
-                  Payment: <span className="font-semibold text-charcoal">{typeof selectedOrder.paymentMethod === 'string' ? selectedOrder.paymentMethod : 'COD'}</span> ({typeof selectedOrder.paymentStatus === 'string' ? selectedOrder.paymentStatus : 'Pending'})
+                  Payment Method: <span className="font-semibold text-charcoal">{typeof selectedOrder.paymentMethod === 'string' ? selectedOrder.paymentMethod : 'COD'}</span> • Status: <span className={`font-bold ${selectedOrder.paymentStatus === 'Paid' ? 'text-emerald-700' : 'text-amber-600'}`}>{typeof selectedOrder.paymentStatus === 'string' ? selectedOrder.paymentStatus : 'Pending'}</span>
                 </p>
                 {selectedOrder.notes && (
                   <p className="text-xs text-primary bg-primary/5 p-2 rounded-lg font-medium">

@@ -791,17 +791,35 @@ export const AdminProvider = ({ children }) => {
     setState(prev => ({
       ...prev,
       orders: prev.orders.map(order =>
-        (order.id === orderId || order._id === orderId) ? { ...order, orderStatus: newStatus } : order
+        (order.id === orderId || order._id === orderId || order.orderNumber === orderId) ? { ...order, orderStatus: newStatus } : order
       )
     }));
     showToast(`Order ${orderId} marked as ${newStatus}.`);
 
     try {
-      const target = state.orders.find(o => o.id === orderId || o._id === orderId);
-      const targetId = target?._id || orderId;
+      const target = state.orders.find(o => o.id === orderId || o._id === orderId || o.orderNumber === orderId);
+      const targetId = target?._id || target?.orderNumber || orderId;
       await apiClient.patch(`/admin/orders/${targetId}/status`, { status: newStatus });
     } catch (err) {
       console.warn('Backend order status update note:', err?.message);
+    }
+  };
+
+  const updatePaymentStatus = async (orderId, newPaymentStatus) => {
+    setState(prev => ({
+      ...prev,
+      orders: prev.orders.map(order =>
+        (order.id === orderId || order._id === orderId || order.orderNumber === orderId) ? { ...order, paymentStatus: newPaymentStatus } : order
+      )
+    }));
+    showToast(`Order ${orderId} payment marked as ${newPaymentStatus}.`);
+
+    try {
+      const target = state.orders.find(o => o.id === orderId || o._id === orderId || o.orderNumber === orderId);
+      const targetId = target?._id || target?.orderNumber || orderId;
+      await apiClient.patch(`/admin/orders/${targetId}/payment-status`, { paymentStatus: newPaymentStatus });
+    } catch (err) {
+      console.warn('Backend payment status update note:', err?.message);
     }
   };
 
@@ -1413,6 +1431,7 @@ export const AdminProvider = ({ children }) => {
         deleteOccasion,
         toggleOccasionActive,
         updateOrderStatus,
+        updatePaymentStatus,
         updateOrderTracking,
         deleteOrder,
         inquiries: state.inquiries || [],
