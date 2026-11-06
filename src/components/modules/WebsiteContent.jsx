@@ -4,18 +4,12 @@ import {
   Edit2,
   Trash2,
   Star,
-  Image as ImageIcon,
-  Phone,
-  Mail,
-  MapPin,
-  Clock,
-  Save
+  Image as ImageIcon
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
-import apiClient from '../../services/api';
 
 export const WebsiteContent = () => {
   const {
@@ -34,109 +28,7 @@ export const WebsiteContent = () => {
   const [activeTab, setActiveTab] = useState('banners');
   const [featuredFilter, setFeaturedFilter] = useState('all');
 
-  const [contactForm, setContactForm] = useState({
-    phone: settings?.contactPhone || '',
-    altPhone: settings?.altContactPhone || '',
-    email: settings?.contactEmail || settings?.supportEmail || '',
-    altEmail: settings?.altContactEmail || '',
-    location: settings?.storeAddress || '',
-    hours: settings?.supportHours || '',
-    altHours: settings?.altSupportHours || '',
-    googleMapUrl: settings?.googleMapUrl || '',
-  });
-  const [isSavingContact, setIsSavingContact] = useState(false);
-  const [contactErrors, setContactErrors] = useState({});
 
-  useEffect(() => {
-    // Fetch live contact settings dynamically from MongoDB
-    const fetchMongoSettings = async () => {
-      try {
-        let res;
-        try {
-          res = await apiClient.get('/admin/settings');
-        } catch {
-          res = await apiClient.get('/customer/content/settings');
-        }
-        const s = res?.data?.settings;
-        if (s) {
-          setContactForm({
-            phone: s.contactPhone || '',
-            altPhone: s.altContactPhone || '',
-            email: s.contactEmail || s.supportEmail || '',
-            altEmail: s.altContactEmail || '',
-            location: s.storeAddress || '',
-            hours: s.supportHours || '',
-            altHours: s.altSupportHours || '',
-            googleMapUrl: s.googleMapUrl || '',
-          });
-        }
-      } catch (e) {
-        console.warn('Could not fetch settings from MongoDB:', e);
-      }
-    };
-    fetchMongoSettings();
-  }, []);
-
-  useEffect(() => {
-    if (settings) {
-      setContactForm(prev => ({
-        phone: settings.contactPhone ?? prev.phone,
-        altPhone: settings.altContactPhone ?? prev.altPhone,
-        email: settings.contactEmail ?? settings.supportEmail ?? prev.email,
-        altEmail: settings.altContactEmail ?? prev.altEmail,
-        location: settings.storeAddress ?? prev.location,
-        hours: settings.supportHours ?? prev.hours,
-        altHours: settings.altSupportHours ?? prev.altHours,
-        googleMapUrl: settings.googleMapUrl ?? prev.googleMapUrl,
-      }));
-    }
-  }, [settings]);
-
-  const handleSaveContact = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    const errs = {};
-    if (!contactForm.phone.trim()) errs.phone = 'Phone number is required.';
-    if (!contactForm.email.trim()) errs.email = 'Support email is required.';
-    if (!contactForm.location.trim()) errs.location = 'Store location is required.';
-    if (!contactForm.hours.trim()) errs.hours = 'Support hours are required.';
-
-    if (Object.keys(errs).length > 0) {
-      setContactErrors(errs);
-      return;
-    }
-
-    setIsSavingContact(true);
-    try {
-      await updateSettings({
-        contactPhone: contactForm.phone.trim(),
-        altContactPhone: contactForm.altPhone.trim(),
-        contactEmail: contactForm.email.trim(),
-        altContactEmail: contactForm.altEmail.trim(),
-        storeAddress: contactForm.location.trim(),
-        supportHours: contactForm.hours.trim(),
-        altSupportHours: contactForm.altHours.trim(),
-        googleMapUrl: contactForm.googleMapUrl.trim(),
-      });
-      const contactData = {
-        phone: contactForm.phone.trim(),
-        altPhone: contactForm.altPhone.trim(),
-        email: contactForm.email.trim(),
-        altEmail: contactForm.altEmail.trim(),
-        location: contactForm.location.trim(),
-        hours: contactForm.hours.trim(),
-        altHours: contactForm.altHours.trim(),
-        googleMapUrl: contactForm.googleMapUrl.trim(),
-      };
-      localStorage.setItem('rs_gifts_contact_info', JSON.stringify(contactData));
-      window.dispatchEvent(new CustomEvent('rs_gifts_contact_updated', { detail: contactData }));
-      showToast('Contact Us info saved & updated on live website!');
-    } catch (err) {
-      console.error(err);
-      showToast('Failed to save contact info', 'error');
-    } finally {
-      setIsSavingContact(false);
-    }
-  };
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
@@ -241,16 +133,7 @@ export const WebsiteContent = () => {
           <span>Featured Gifts Showcase ({products.filter((p) => p.featured).length})</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('contact')}
-          className={`flex items-center gap-2 py-2 text-sm font-semibold transition-all cursor-pointer ${activeTab === 'contact'
-            ? 'text-primary font-bold'
-            : 'text-soft-gray hover:text-charcoal'
-            }`}
-        >
-          <Phone className="w-4 h-4" />
-          <span>Contact Us</span>
-        </button>
+
       </div>
 
       {activeTab === 'banners' && (
@@ -450,202 +333,6 @@ export const WebsiteContent = () => {
                 })}
             </div>
           )}
-        </div>
-      )}
-
-      {activeTab === 'contact' && (
-        <div className="space-y-6 max-w-3xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-bold text-charcoal flex items-center gap-2">
-                <Phone className="w-5 h-5 text-primary" />
-                Contact Us Website Content
-              </h2>
-              <p className="text-xs text-soft-gray mt-0.5">
-                Edit the phone number, email, address, and working hours displayed across the customer website footer.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-surface p-6 sm:p-8 rounded-2xl border border-soft-gray/20 shadow-card space-y-5">
-            <form onSubmit={handleSaveContact} className="space-y-5">
-              {/* Phone Numbers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-primary" />
-                    Customer Support Phone
-                  </label>
-                  <input
-                    type="text"
-                    value={contactForm.phone}
-                    onChange={(e) => {
-                      setContactForm({ ...contactForm, phone: e.target.value });
-                      if (contactErrors.phone) setContactErrors({ ...contactErrors, phone: '' });
-                    }}
-                    placeholder="+91 98765 43210"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.phone ? 'border-error' : 'border-soft-gray/25'
-                      }`}
-                  />
-                  {contactErrors.phone && (
-                    <p className="text-xs text-error mt-1">{contactErrors.phone}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-primary" />
-                    Alternate Phone (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={contactForm.altPhone}
-                    onChange={(e) => {
-                      setContactForm({ ...contactForm, altPhone: e.target.value });
-                    }}
-                    placeholder="+91 98765 43211 (Leave empty if none)"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Email Addresses */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-primary" />
-                    Support Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={contactForm.email}
-                    onChange={(e) => {
-                      setContactForm({ ...contactForm, email: e.target.value });
-                      if (contactErrors.email) setContactErrors({ ...contactErrors, email: '' });
-                    }}
-                    placeholder="support@rsgifts.in"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.email ? 'border-error' : 'border-soft-gray/25'
-                      }`}
-                  />
-                  {contactErrors.email && (
-                    <p className="text-xs text-error mt-1">{contactErrors.email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-primary" />
-                    Alternate Email (Optional)
-                  </label>
-                  <input
-                    type="email"
-                    value={contactForm.altEmail}
-                    onChange={(e) => {
-                      setContactForm({ ...contactForm, altEmail: e.target.value });
-                    }}
-                    placeholder="info@rsgifts.com (Leave empty if none)"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Store Location */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  Location / Address
-                </label>
-                <input
-                  type="text"
-                  value={contactForm.location}
-                  onChange={(e) => {
-                    setContactForm({ ...contactForm, location: e.target.value });
-                    if (contactErrors.location) setContactErrors({ ...contactErrors, location: '' });
-                  }}
-                  placeholder="Guntur, Andhra Pradesh"
-                  className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.location ? 'border-error' : 'border-soft-gray/25'
-                    }`}
-                />
-                {contactErrors.location && (
-                  <p className="text-xs text-error mt-1">{contactErrors.location}</p>
-                )}
-              </div>
-
-              {/* Working Hours */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-primary" />
-                    Customer Support Hours
-                  </label>
-                  <input
-                    type="text"
-                    value={contactForm.hours}
-                    onChange={(e) => {
-                      setContactForm({ ...contactForm, hours: e.target.value });
-                      if (contactErrors.hours) setContactErrors({ ...contactErrors, hours: '' });
-                    }}
-                    placeholder="Mon - Sat: 9:00 AM - 8:00 PM"
-                    className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors ${contactErrors.hours ? 'border-error' : 'border-soft-gray/25'
-                      }`}
-                  />
-                  {contactErrors.hours && (
-                    <p className="text-xs text-error mt-1">{contactErrors.hours}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-primary" />
-                    Alternate / Weekend Hours (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={contactForm.altHours}
-                    onChange={(e) => {
-                      setContactForm({ ...contactForm, altHours: e.target.value });
-                    }}
-                    placeholder="Sunday: 10:00 AM - 5:00 PM (Leave empty if none)"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Google Navigation / Map Embed URL */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  Google Navigation / Map Embed URL (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={contactForm.googleMapUrl}
-                  onChange={(e) => {
-                    setContactForm({ ...contactForm, googleMapUrl: e.target.value });
-                  }}
-                  placeholder="https://www.google.com/maps/embed?pb=... (Leave empty to keep blank)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary focus:outline-none transition-colors"
-                />
-                <p className="text-[11px] text-soft-gray mt-1">
-                  Paste your Google Maps embed iframe link or navigation URL here. If left empty, it will display as empty on the Contact page.
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-soft-gray/15 flex items-center justify-between">
-                <span className="text-xs text-soft-gray">
-                  Changes update the website footer in real-time.
-                </span>
-                <button
-                  type="submit"
-                  disabled={isSavingContact}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSavingContact ? 'Saving...' : 'Save Contact Info'}
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
 

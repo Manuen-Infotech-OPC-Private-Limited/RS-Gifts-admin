@@ -1338,12 +1338,18 @@ export const AdminProvider = ({ children }) => {
     setState(prev => {
       const merged = { ...prev.settings, ...updatedSettings };
       try {
-        localStorage.setItem('rs_gifts_contact_info', JSON.stringify({
-          phone: merged.contactPhone,
-          email: merged.contactEmail || merged.supportEmail,
-          location: merged.storeAddress,
-          hours: merged.supportHours,
-        }));
+        const contactData = {
+          phone: merged.contactPhone || '',
+          altPhone: merged.altContactPhone || '',
+          email: merged.contactEmail || merged.supportEmail || '',
+          altEmail: merged.altContactEmail || '',
+          location: merged.storeAddress || '',
+          hours: merged.supportHours || '',
+          altHours: merged.altSupportHours || '',
+          googleMapUrl: merged.googleMapUrl || '',
+        };
+        localStorage.setItem('rs_gifts_contact_info', JSON.stringify(contactData));
+        window.dispatchEvent(new CustomEvent('rs_gifts_contact_updated', { detail: contactData }));
         if (merged.storeLogo !== undefined) {
           localStorage.setItem('rs_gifts_store_logo', merged.storeLogo || '');
         }

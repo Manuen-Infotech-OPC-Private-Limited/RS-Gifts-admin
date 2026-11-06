@@ -9,6 +9,10 @@ import {
   ExternalLink,
   Truck,
   IndianRupee,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
@@ -24,6 +28,14 @@ export const SettingsModule = () => {
     pinterestUrl: '',
     standardShippingFee: 0,
     freeShippingThreshold: 0,
+    contactPhone: '',
+    altContactPhone: '',
+    contactEmail: '',
+    altContactEmail: '',
+    storeAddress: '',
+    supportHours: '',
+    altSupportHours: '',
+    googleMapUrl: '',
     ...settings
   });
 
@@ -38,6 +50,14 @@ export const SettingsModule = () => {
         pinterestUrl: settings.pinterestUrl ?? prev.pinterestUrl ?? '',
         standardShippingFee: settings.standardShippingFee !== undefined ? Number(settings.standardShippingFee) : (prev.standardShippingFee ?? 0),
         freeShippingThreshold: settings.freeShippingThreshold !== undefined ? Number(settings.freeShippingThreshold) : (prev.freeShippingThreshold ?? 0),
+        contactPhone: settings.contactPhone ?? prev.contactPhone ?? '',
+        altContactPhone: settings.altContactPhone ?? prev.altContactPhone ?? '',
+        contactEmail: settings.contactEmail ?? settings.supportEmail ?? prev.contactEmail ?? '',
+        altContactEmail: settings.altContactEmail ?? prev.altContactEmail ?? '',
+        storeAddress: settings.storeAddress ?? prev.storeAddress ?? '',
+        supportHours: settings.supportHours ?? prev.supportHours ?? '',
+        altSupportHours: settings.altSupportHours ?? prev.altSupportHours ?? '',
+        googleMapUrl: settings.googleMapUrl ?? prev.googleMapUrl ?? '',
       }));
     }
   }, [settings]);
@@ -59,6 +79,21 @@ export const SettingsModule = () => {
     });
   };
 
+  const handleSaveContact = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    updateSettings({
+      ...formData,
+      contactPhone: (formData.contactPhone || '').trim(),
+      altContactPhone: (formData.altContactPhone || '').trim(),
+      contactEmail: (formData.contactEmail || '').trim(),
+      altContactEmail: (formData.altContactEmail || '').trim(),
+      storeAddress: (formData.storeAddress || '').trim(),
+      supportHours: (formData.supportHours || '').trim(),
+      altSupportHours: (formData.altSupportHours || '').trim(),
+      googleMapUrl: (formData.googleMapUrl || '').trim(),
+    });
+  };
+
   const handleSaveSocial = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     updateSettings({
@@ -75,7 +110,7 @@ export const SettingsModule = () => {
       <div>
         <h1 className="text-2xl font-bold text-charcoal tracking-tight">Settings</h1>
         <p className="text-sm text-soft-gray mt-1">
-          Configure RS Gifts store identity, delivery charges, social channels, and public details.
+          Configure RS Gifts store identity, delivery charges, contact info, social channels, and public details.
         </p>
       </div>
 
@@ -161,6 +196,164 @@ export const SettingsModule = () => {
             >
               <Save className="w-4 h-4" />
               Save Delivery Settings
+            </button>
+          </div>
+        </div>
+
+        {/* Contact Us & Store Information Section */}
+        <div className="bg-surface p-6 rounded-2xl border border-soft-gray/20 shadow-card space-y-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-charcoal">Contact Us</h3>
+              <p className="text-xs text-soft-gray">
+                Edit phone numbers, email addresses, store location, working hours, and Google Maps embed displayed on the customer website footer & contact page.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Phone Numbers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                  <Phone className="w-3.5 h-3.5 text-primary" />
+                  Customer Support Phone
+                </label>
+                <input
+                  type="text"
+                  value={formData.contactPhone || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, contactPhone: e.target.value }))}
+                  placeholder="+91 98765 43210"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                  <Phone className="w-3.5 h-3.5 text-primary" />
+                  Alternate Phone (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.altContactPhone || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, altContactPhone: e.target.value }))}
+                  placeholder="+91 98765 43211 (Leave empty if none)"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                />
+              </div>
+            </div>
+
+            {/* Email Addresses */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                  <Mail className="w-3.5 h-3.5 text-primary" />
+                  Support Email Address
+                </label>
+                <input
+                  type="email"
+                  value={formData.contactEmail || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, contactEmail: e.target.value }))}
+                  placeholder="support@rsgifts.in"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                  <Mail className="w-3.5 h-3.5 text-primary" />
+                  Alternate Email (Optional)
+                </label>
+                <input
+                  type="email"
+                  value={formData.altContactEmail || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, altContactEmail: e.target.value }))}
+                  placeholder="info@rsgifts.com (Leave empty if none)"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                />
+              </div>
+            </div>
+
+            {/* Store Location */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                <MapPin className="w-3.5 h-3.5 text-primary" />
+                Store Location / Address
+              </label>
+              <input
+                type="text"
+                value={formData.storeAddress || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, storeAddress: e.target.value }))}
+                placeholder="Guntur, Andhra Pradesh"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+              />
+            </div>
+
+            {/* Working Hours */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                  <Clock className="w-3.5 h-3.5 text-primary" />
+                  Customer Support Hours
+                </label>
+                <input
+                  type="text"
+                  value={formData.supportHours || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, supportHours: e.target.value }))}
+                  placeholder="Mon - Sat: 9:00 AM - 8:00 PM"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                  <Clock className="w-3.5 h-3.5 text-primary" />
+                  Alternate / Weekend Hours (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.altSupportHours || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, altSupportHours: e.target.value }))}
+                  placeholder="Sunday: 10:00 AM - 5:00 PM (Leave empty if none)"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+                />
+              </div>
+            </div>
+
+            {/* Google Maps Embed / Navigation URL */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-charcoal">
+                <MapPin className="w-3.5 h-3.5 text-primary" />
+                Google Navigation / Map Embed URL (Optional)
+              </label>
+              <input
+                type="text"
+                value={formData.googleMapUrl || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, googleMapUrl: e.target.value }))}
+                placeholder="https://www.google.com/maps/embed?pb=... (Leave empty to keep blank)"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal"
+              />
+              <p className="text-[11px] text-soft-gray">
+                Paste your Google Maps embed iframe link or navigation URL here. If left empty, it will display as empty on the Contact page.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <span className="text-xs text-soft-gray">
+              Changes update the website contact page and footer in real-time.
+            </span>
+            <button
+              type="button"
+              onClick={handleSaveContact}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer ml-auto"
+            >
+              <Save className="w-4 h-4" />
+              Save Contact Info
             </button>
           </div>
         </div>
