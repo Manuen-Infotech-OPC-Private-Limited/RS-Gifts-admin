@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Search, 
   Mail, 
@@ -14,11 +14,14 @@ import {
   RefreshCw, 
   CheckCircle2, 
   Users, 
-  CreditCard 
+  CreditCard,
+  Gift,
+  Package
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Modal } from '../common/Modal';
 import { Badge } from '../common/Badge';
+import customerService from '../../services/customerService';
 
 export const CustomersModule = () => {
   const { customers, orders, settings, refreshCustomers, toggleCustomerStatus, showToast } = useAdmin();
@@ -73,20 +76,89 @@ export const CustomersModule = () => {
     return name.includes(term) || email.includes(term) || phone.includes(term) || location.includes(term);
   });
 
-  // Calculate customer orders
+  // Calculate customer orders (matches by email, phone, or customer ID)
   const getCustomerOrders = (customer) => {
     if (!customer) return [];
-    const custEmail = (customer.email || '').toLowerCase();
+    const custEmail = (customer.email || '').toLowerCase().trim();
+    const custPhone = String(customer.phone || '').trim();
     const custId = String(customer.id || customer._id || '');
 
     return (orders || []).filter((o) => {
-      const orderEmail = (o.customerEmail || o.customerInfo?.email || '').toLowerCase();
-      const orderCustId = String(o.customer || o.customerId || '');
-      return (custEmail && orderEmail === custEmail) || (custId && orderCustId === custId);
+      const orderEmail = (o.customerEmail || o.customerInfo?.email || '').toLowerCase().trim();
+      const orderPhone = String(o.customerPhone || o.customerInfo?.phone || '').trim();
+      const orderCustId = String(o.customer?._id || o.customer || o.customerId || '');
+      return (
+        (custId && orderCustId && custId === orderCustId) ||
+        (custEmail && orderEmail && custEmail === orderEmail) ||
+        (custPhone && orderPhone && custPhone === orderPhone)
+      );
     });
   };
 
   const selectedOrders = selectedCustomer ? getCustomerOrders(selectedCustomer) : [];
+
+  // Aggregated addresses from user profile + all order shipping addresses
+  const getCustomerAddresses = (customer, customerOrders) => {
+    if (!customer) return [];
+    const list = [...(customer.addresses || [])];
+
+    (customerOrders || []).forEach((order) => {
+      const s = order.shippingAddress;
+      if (s && (s.addressLine1 || s.city)) {
+        const fullAddrStr = [s.addressLine1, s.addressLine2, s.city, s.state, s.postalCode].filter(Boolean).join(', ');
+        const exists = list.some((a) => {
+          const aFull = [a.addressLine1, a.addressLine2, a.city, a.state, a.postalCode].filter(Boolean).join(', ');
+          const aLine1 = (a.addressLine1 || '').trim().toLowerCase();
+          const sLine1 = (s.addressLine1 || '').trim().toLowerCase();
+          return aFull.toLowerCase() === fullAddrStr.toLowerCase() || (aLine1 && sLine1 && aLine1 === sLine1);
+        });
+
+        if (!exists) {
+          list.push({
+            id: order.id || order._id,
+            _id: order.id || order._id,
+            recipientName: s.recipientName || customer.name,
+            phone: s.phone || customer.phone || '',
+            addressLine1: s.addressLine1,
+            addressLine2: s.addressLine2 || '',
+            city: s.city,
+            state: s.state,
+            postalCode: s.postalCode,
+            country: s.country || 'India',
+            isDefault: list.length === 0,
+            source: `Order #${order.orderNumber || order.id || order._id}`,
+          });
+        }
+      }
+    });
+
+    if (list.length === 0 && customer.address && customer.address !== '—' && customer.address !== 'Not provided') {
+      list.push({
+        id: 'primary',
+        _id: 'primary',
+        recipientName: customer.name,
+        phone: customer.phone,
+        addressLine1: customer.address,
+        isDefault: true,
+      });
+    }
+
+    return list;
+  };
+
+  const customerAddresses = selectedCustomer ? getCustomerAddresses(selectedCustomer, selectedOrders) : [];
+
+  const primaryAddressText = useMemo(() => {
+    if (!selectedCustomer) return 'Not provided';
+    if (selectedCustomer.address && selectedCustomer.address !== '—' && selectedCustomer.address !== 'Not provided') {
+      return selectedCustomer.address;
+    }
+    if (customerAddresses.length > 0) {
+      const def = customerAddresses.find((a) => a.isDefault) || customerAddresses[0];
+      return [def.addressLine1, def.addressLine2, def.city, def.state, def.postalCode].filter(Boolean).join(', ');
+    }
+    return 'Not provided';
+  }, [selectedCustomer, customerAddresses]);
 
   // Summary Metrics
   const totalCustomers = (customers || []).length;
@@ -243,11 +315,19 @@ export const CustomersModule = () => {
                     <td className="px-6 py-4 text-xs text-soft-gray">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-soft-gray shrink-0" />
-                        <span className="truncate max-w-[150px]">{cust.address || '—'}</span>
+                        <span className="truncate max-w-[180px]">
+                          {cust.address && cust.address !== '—' && cust.address !== 'Not provided'
+                            ? cust.address
+                            : (() => {
+                                const o = getCustomerOrders(cust);
+                                const s = o[0]?.shippingAddress;
+                                return s ? [s.addressLine1, s.city, s.postalCode].filter(Boolean).join(', ') : 'Not provided';
+                              })()}
+                        </span>
                       </div>
-                      {cust.addressesCount > 1 && (
-                        <span className="text-[10px] text-primary font-medium">
-                          +{cust.addressesCount} saved addresses
+                      {(cust.addressesCount > 1 || (cust.addresses?.length || 0) > 1) && (
+                        <span className="text-[10px] text-primary font-medium block mt-0.5">
+                          +{cust.addressesCount || cust.addresses?.length} saved addresses
                         </span>
                       )}
                     </td>
@@ -289,9 +369,17 @@ export const CustomersModule = () => {
 
                     <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setSelectedCustomer(cust);
                           setActiveTab('profile');
+                          try {
+                            const fresh = await customerService.fetchCustomerById(cust.id || cust._id);
+                            if (fresh?.customer) {
+                              setSelectedCustomer(fresh.customer);
+                            }
+                          } catch {
+                            // keep fallback
+                          }
                         }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-surface bg-primary hover:bg-primary/90 shadow-sm transition-all active:scale-95 cursor-pointer"
                       >
@@ -322,7 +410,6 @@ export const CustomersModule = () => {
         <Modal
           isOpen={!!selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
-          title={`Customer Account: ${selectedCustomer.name || 'Profile'}`}
           maxWidth="max-w-3xl"
         >
           <div className="space-y-5 font-sans">
@@ -337,15 +424,6 @@ export const CustomersModule = () => {
                     <h3 className="font-bold text-charcoal text-lg">
                       {selectedCustomer.name || `${selectedCustomer.firstName || ''} ${selectedCustomer.lastName || ''}`.trim() || 'Customer'}
                     </h3>
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                        selectedCustomer.isActive !== false
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {selectedCustomer.isActive !== false ? 'Active Account' : 'Blocked'}
-                    </span>
                   </div>
                   <p className="text-xs text-soft-gray mt-0.5">
                     {selectedCustomer.email} • {selectedCustomer.phone || 'No phone'}
@@ -385,7 +463,7 @@ export const CustomersModule = () => {
                 }`}
               >
                 <MapPin className="w-3.5 h-3.5" />
-                <span>Saved Addresses ({selectedCustomer.addresses?.length || 0})</span>
+                <span>Saved Addresses ({customerAddresses.length})</span>
               </button>
 
               <button
@@ -452,29 +530,10 @@ export const CustomersModule = () => {
                     </p>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-warm-ivory/50 border border-soft-gray/15">
-                    <p className="text-[11px] font-semibold text-soft-gray uppercase tracking-wider">Last Login</p>
-                    <p className="text-sm font-bold text-charcoal mt-1">
-                      {selectedCustomer.lastLogin
-                        ? new Date(selectedCustomer.lastLogin).toLocaleString('en-IN', {
-                            dateStyle: 'medium',
-                            timeStyle: 'short',
-                          })
-                        : 'Never logged in'}
-                    </p>
-                  </div>
-
                   <div className="p-3.5 rounded-xl bg-warm-ivory/50 border border-soft-gray/15 sm:col-span-2">
                     <p className="text-[11px] font-semibold text-soft-gray uppercase tracking-wider">Address / Location</p>
                     <p className="text-sm font-bold text-charcoal mt-1">
-                      {selectedCustomer.address || selectedCustomer.addresses?.[0]?.addressLine1 || 'Not provided'}
-                    </p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-warm-ivory/50 border border-soft-gray/15">
-                    <p className="text-[11px] font-semibold text-soft-gray uppercase tracking-wider">Database ID</p>
-                    <p className="text-xs font-mono text-charcoal mt-1 truncate">
-                      {selectedCustomer.id || selectedCustomer._id}
+                      {primaryAddressText}
                     </p>
                   </div>
                 </div>
@@ -506,22 +565,26 @@ export const CustomersModule = () => {
             {/* Tab 2: Saved Delivery Addresses */}
             {activeTab === 'addresses' && (
               <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                {(selectedCustomer.addresses || []).length > 0 ? (
-                  selectedCustomer.addresses.map((addr, idx) => (
+                {customerAddresses.length > 0 ? (
+                  customerAddresses.map((addr, idx) => (
                     <div
                       key={addr._id || addr.id || idx}
                       className="p-4 rounded-xl border border-soft-gray/20 bg-surface space-y-1.5"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-charcoal">
-                          {addr.recipientName || selectedCustomer.name}
-                        </span>
-                        {addr.isDefault && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            Default Address
-                          </span>
-                        )}
-                      </div>
+                      {(addr.source || addr.isDefault) && (
+                        <div className="flex items-center gap-1.5 justify-end">
+                          {addr.source && (
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-warm-ivory text-soft-gray border border-soft-gray/20">
+                              {addr.source}
+                            </span>
+                          )}
+                          {addr.isDefault && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                              Default Address
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <p className="text-xs text-soft-gray">
                         {addr.addressLine1}
                         {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
@@ -549,17 +612,18 @@ export const CustomersModule = () => {
 
             {/* Tab 3: Order History */}
             {activeTab === 'orders' && (
-              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[480px] overflow-y-auto pr-1">
                 {selectedOrders.length > 0 ? (
                   selectedOrders.map((order) => (
                     <div
                       key={order.id || order._id}
-                      className="p-4 rounded-xl border border-soft-gray/20 bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 sm:p-5 rounded-2xl border border-soft-gray/20 bg-surface space-y-3.5 shadow-2xs hover:border-primary/30 transition-all"
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-charcoal font-mono">
-                            {order.id || order.orderNumber}
+                      {/* Order Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-xs sm:text-sm text-charcoal font-mono bg-warm-ivory px-2.5 py-1 rounded-lg border border-soft-gray/20">
+                            #{order.orderNumber || order.id || order._id}
                           </span>
                           <Badge
                             variant={
@@ -574,20 +638,118 @@ export const CustomersModule = () => {
                           >
                             {order.orderStatus}
                           </Badge>
-                          <span className="text-[11px] text-soft-gray">
-                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : ''}
+                          <span className="text-xs text-soft-gray flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
                           </span>
                         </div>
-
-                        <p className="text-xs text-soft-gray mt-1">
-                          {order.items?.length || 0} item(s) • Payment: {order.paymentMethod || 'COD'} ({order.paymentStatus || 'Pending'})
-                        </p>
                       </div>
 
-                      <div className="text-left sm:text-right">
-                        <span className="font-bold text-charcoal text-sm">
-                          {settings.currencySymbol || '₹'}{order.totalAmount}
+                      {/* Items Ordered - Photo & Clear Details */}
+                      <div className="space-y-2.5">
+                        {(order.items || []).map((item, idx) => {
+                            const itemImg = item.image || item.productImage || item.img || item.product?.image;
+                            const itemTitle = item.title || item.name || item.productTitle || item.product?.title || 'Custom Gift';
+                            const itemPrice = Number(item.price) || 0;
+                            const itemQty = Number(item.quantity || item.qty) || 1;
+                            const itemSubtotal = itemPrice * itemQty;
+                            const persData = item.personalizationData || item.customizations || item.customization;
+
+                            return (
+                              <div
+                                key={item._id || item.id || idx}
+                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 p-3 rounded-xl bg-warm-ivory/40 border border-soft-gray/15 hover:bg-warm-ivory/70 transition-colors"
+                              >
+                                {/* Photo & Details */}
+                                <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                                  {/* Product Thumbnail Photo */}
+                                  <div className="relative w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden border border-soft-gray/25 bg-surface shrink-0 shadow-2xs flex items-center justify-center">
+                                    {itemImg ? (
+                                      <img
+                                        src={itemImg}
+                                        alt={itemTitle}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.target.style.display = 'none';
+                                          if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                                        }}
+                                      />
+                                    ) : null}
+                                    <div className={`w-full h-full bg-primary/10 flex flex-col items-center justify-center text-primary ${itemImg ? 'hidden' : 'flex'}`}>
+                                      <Gift className="w-6 h-6" />
+                                      <span className="text-[9px] font-semibold mt-0.5">Gift</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Title & Metadata */}
+                                  <div className="min-w-0 space-y-1">
+                                    <h5 className="font-bold text-sm text-charcoal leading-snug">
+                                      {itemTitle}
+                                    </h5>
+
+                                    <div className="flex flex-wrap items-center gap-2 text-xs text-soft-gray">
+                                      <span>
+                                        Qty: <strong className="text-charcoal font-semibold">{itemQty}</strong>
+                                      </span>
+                                      <span>•</span>
+                                      <span>
+                                        Price: <strong className="text-charcoal font-semibold">{settings.currencySymbol || '₹'}{itemPrice.toLocaleString()}</strong>
+                                      </span>
+                                    </div>
+
+                                    {/* Personalization Details */}
+                                    {persData && (persData.customText || persData.giftCardMessage || persData.photoUploaded) && (
+                                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                                        {persData.customText && (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">
+                                            <span>✨ Engraving:</span>
+                                            <strong className="text-charcoal">"{persData.customText}"</strong>
+                                          </span>
+                                        )}
+                                        {persData.giftCardMessage && (
+                                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/60 font-medium">
+                                            <span>💌 Note:</span>
+                                            <span className="italic max-w-[200px] truncate">"{persData.giftCardMessage}"</span>
+                                          </span>
+                                        )}
+                                        {persData.photoUploaded && (
+                                          <a
+                                            href={persData.photoUploaded}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 hover:underline font-semibold text-[11px]"
+                                          >
+                                            <Eye className="w-3 h-3" />
+                                            <span>Custom Photo</span>
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Item Total */}
+                                <div className="text-left sm:text-right shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-soft-gray/10">
+                                  <span className="text-[10px] uppercase font-semibold text-soft-gray sm:block">Subtotal: </span>
+                                  <span className="font-bold text-charcoal text-sm sm:text-base">
+                                    {settings.currencySymbol || '₹'}{itemSubtotal.toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                      {/* Footer: Payment & Delivery Details */}
+                      <div className="flex flex-wrap items-center justify-between text-xs text-soft-gray gap-2">
+                        <span>
+                          Payment: <strong className="text-charcoal font-semibold">{order.paymentMethod || 'COD'}</strong> ({order.paymentStatus || 'Pending'})
                         </span>
+                        {order.shippingAddress && (
+                          <span className="truncate max-w-[300px]">
+                            {[order.shippingAddress.addressLine1, order.shippingAddress.city, order.shippingAddress.postalCode].filter(Boolean).join(', ')}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))

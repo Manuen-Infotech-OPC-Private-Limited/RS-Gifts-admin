@@ -451,16 +451,6 @@ export const OrdersModule = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                  <Gift className="w-4 h-4 text-primary" />
-                  Ordered Gift Items ({selectedOrder.items?.length || 0})
-                </h4>
-                <span className="text-xs font-semibold text-soft-gray">
-                  Total Items: {selectedOrder.items?.reduce((s, i) => s + (i.quantity || 1), 0) || 0}
-                </span>
-              </div>
-
               <div className="space-y-3">
                 {selectedOrder.items.map((item, idx) => (
                   <div
@@ -506,26 +496,13 @@ export const OrdersModule = () => {
                           >
                             {item.title}
                           </button>
-                          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                            {(item.productId || item.sku) && (
-                              <span className="font-mono text-[11px] font-bold text-soft-gray bg-warm-ivory px-2 py-0.5 rounded border border-soft-gray/20">
-                                SKU: {item.productId || item.sku}
-                              </span>
-                            )}
-                            {item.category && (
+                          {item.category && (
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
                               <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
                                 {item.category}
                               </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenProductPreview(item)}
-                              className="text-[11px] font-bold text-primary hover:underline ml-1 inline-flex items-center gap-0.5 cursor-pointer"
-                            >
-                              <span>View Specs</span>
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </button>
-                          </div>
+                            </div>
+                          )}
                           <p className="text-xs text-soft-gray font-medium">
                             Unit Price: {settings.currencySymbol || '₹'}{item.price} • Quantity: <span className="font-bold text-charcoal">{item.quantity}</span>
                           </p>
@@ -543,7 +520,7 @@ export const OrdersModule = () => {
 
                     {/* Customer Personalization Details */}
                     {item.personalizationData && (
-                      <div className="pt-3 border-t border-soft-gray/15 space-y-2 text-xs">
+                      <div className="pt-2 space-y-2 text-xs">
                         <span className="text-[11px] uppercase tracking-wider font-bold text-soft-gray block">
                           Customer Personalizations:
                         </span>
@@ -736,10 +713,6 @@ export const OrdersModule = () => {
                   <h3 className="text-xl font-bold text-charcoal leading-snug">
                     {previewProduct.title}
                   </h3>
-
-                  <div className="flex items-center gap-2 mt-1.5 font-mono text-xs text-soft-gray">
-                    <span>SKU: <strong className="text-charcoal">{previewProduct.productId || previewProduct.sku}</strong></span>
-                  </div>
                 </div>
 
                 {/* Price Information */}

@@ -35,19 +35,31 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl'
         className={`relative z-10 flex flex-col w-full ${maxWidth} max-h-[calc(100vh-1.75rem)] sm:max-h-[calc(100vh-2.25rem)] rounded-2xl bg-surface text-left shadow-modal border border-soft-gray/20 overflow-hidden transition-all`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between border-b border-soft-gray/15 px-6 py-2.5 bg-warm-ivory/50">
-          <h3 className="text-lg font-semibold text-charcoal">
-            {title}
-          </h3>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-soft-gray hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        {/* Header - Only render title bar when title is provided */}
+        {title ? (
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-soft-gray/15 px-6 py-2.5 bg-warm-ivory/50">
+            <h3 className="text-lg font-semibold text-charcoal">
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-soft-gray hover:bg-primary/10 hover:text-primary transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        ) : (
+          <div className="absolute top-3.5 right-3.5 z-20">
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 bg-surface/90 hover:bg-surface text-soft-gray hover:text-charcoal shadow-xs border border-soft-gray/20 transition-all cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto px-6 pt-4 pb-5 overscroll-contain">
