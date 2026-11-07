@@ -157,9 +157,15 @@ export const ReviewsModule = () => {
                 </div>
 
                 {/* Review Body */}
-                <p className="text-xs text-charcoal leading-relaxed my-4 italic bg-warm-ivory/30 p-3 rounded-xl border border-soft-gray/15">
-                  "{review.comment}"
-                </p>
+                {review.comment ? (
+                  <p className="text-xs text-charcoal leading-relaxed my-4 italic bg-warm-ivory/30 p-3 rounded-xl border border-soft-gray/15">
+                    "{review.comment}"
+                  </p>
+                ) : (
+                  <p className="text-xs text-soft-gray italic my-3">
+                    (No message written - Rating only)
+                  </p>
+                )}
 
                 {/* Admin Reply (if exists) */}
                 {review.adminReply && (
