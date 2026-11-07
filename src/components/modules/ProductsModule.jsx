@@ -40,6 +40,7 @@ export const ProductsModule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedPage, setSelectedPage] = useState('ALL');
+  const [offerFilter, setOfferFilter] = useState('ALL');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -52,6 +53,8 @@ export const ProductsModule = () => {
     targetPage: 'Birthday Gifts',
     targetPages: ['Birthday Gifts'],
     price: '',
+    salePrice: '',
+    offerTag: '',
     stock: '',
     lowStockThreshold: 5,
     image: '',
@@ -81,7 +84,9 @@ export const ProductsModule = () => {
       image: primaryImg,
       targetPage: product.targetPage || (Array.isArray(product.targetPages) ? product.targetPages[0] : '') || '',
       targetPages: Array.isArray(product.targetPages) && product.targetPages.length > 0 ? product.targetPages : (product.targetPage ? [product.targetPage] : []),
-      price: (product.price || product.salePrice || '').toString(),
+      price: (product.price || '').toString(),
+      salePrice: (product.salePrice && Number(product.salePrice) < Number(product.price) ? product.salePrice : '').toString(),
+      offerTag: product.offerTag || '',
       stock: (product.stock ?? 0).toString(),
       lowStockThreshold: product.lowStockThreshold || 5
     });
@@ -96,7 +101,12 @@ export const ProductsModule = () => {
     }
     const priceNum = parseFloat(formData.price);
     if (isNaN(priceNum) || priceNum <= 0) {
-      errs.price = 'Selling price must be greater than 0.';
+      errs.price = 'Regular price must be greater than 0.';
+    }
+    if (formData.salePrice && parseFloat(formData.salePrice) > 0) {
+      if (parseFloat(formData.salePrice) >= priceNum) {
+        errs.salePrice = 'Offer price must be less than regular price.';
+      }
     }
     const stockNum = parseInt(formData.stock, 10);
     if (isNaN(stockNum) || stockNum < 0) {
@@ -133,7 +143,8 @@ export const ProductsModule = () => {
       targetPage: formData.targetPage || targetPagesList[0] || '',
       occasions: targetPagesList,
       price: parseFloat(formData.price),
-      salePrice: parseFloat(formData.price),
+      salePrice: (formData.salePrice && parseFloat(formData.salePrice) > 0 && parseFloat(formData.salePrice) < parseFloat(formData.price)) ? parseFloat(formData.salePrice) : null,
+      offerTag: formData.offerTag ? formData.offerTag.trim() : '',
       stock: parseInt(formData.stock, 10),
       lowStockThreshold: parseInt(formData.lowStockThreshold, 10) || 5
     };
@@ -161,7 +172,12 @@ export const ProductsModule = () => {
       p.targetPage?.toLowerCase() === selectedPage.toLowerCase() ||
       p.category?.toLowerCase() === selectedPage.toLowerCase();
 
-    return matchesSearch && matchesCat && matchesPage;
+    const matchesOffer =
+      offerFilter === 'ALL' ||
+      (offerFilter === 'OFFERS' && p.salePrice && Number(p.salePrice) < Number(p.price)) ||
+      (offerFilter === 'REGULAR' && (!p.salePrice || Number(p.salePrice) >= Number(p.price)));
+
+    return matchesSearch && matchesCat && matchesPage && matchesOffer;
   });
 
   // Pagination (7 products per page, scrollable)
@@ -223,6 +239,17 @@ export const ProductsModule = () => {
           </select>
         </div>
 
+        <div className="w-full md:w-40">
+          <select
+            value={offerFilter}
+            onChange={(e) => setOfferFilter(e.target.value)}
+            className="w-full px-3 py-2 text-sm rounded-xl border border-soft-gray/25 bg-surface text-charcoal focus:border-primary focus:ring-1 focus:ring-primary font-medium"
+          >
+            <option value="ALL">All Pricing</option>
+            <option value="OFFERS">🏷️ Offers Only</option>
+            <option value="REGULAR">Standard Price</option>
+          </select>
+        </div>
         <div className="w-full md:w-48">
           <select
             value={selectedCategory}
@@ -301,10 +328,32 @@ export const ProductsModule = () => {
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-charcoal">
-                        {settings.currencySymbol || '₹'}
-                        {p.price || p.salePrice || 0}
-                      </div>
+                      {p.salePrice && Number(p.salePrice) < Number(p.price) ? (
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-primary">
+                              {settings.currencySymbol || '₹'}{p.salePrice}
+                            </span>
+                            <span className="text-xs text-soft-gray line-through">
+                              {settings.currencySymbol || '₹'}{p.price}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                              {Math.round(((Number(p.price) - Number(p.salePrice)) / Number(p.price)) * 100)}% OFF
+                            </span>
+                            {p.offerTag && (
+                              <span className="text-[10px] text-amber-800 bg-amber-100/70 px-1.5 py-0.5 rounded truncate max-w-[90px]">
+                                {p.offerTag}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="font-semibold text-charcoal">
+                          {settings.currencySymbol || '₹'}{p.price || p.salePrice || 0}
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -496,10 +545,10 @@ export const ProductsModule = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Selling Price ({settings.currencySymbol || '₹'})
+                Regular Price / MRP ({settings.currencySymbol || '₹'}) <span className="text-error">*</span>
               </label>
               <input
                 type="number"
@@ -516,7 +565,24 @@ export const ProductsModule = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Inventory Stock Count
+                Offer Price ({settings.currencySymbol || '₹'}) <span className="text-[10px] text-primary lowercase">(optional)</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={formData.salePrice || ''}
+                onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                placeholder="999"
+                className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-charcoal bg-surface focus:ring-1 focus:ring-primary ${errors.salePrice ? 'border-error ring-1 ring-error' : 'border-soft-gray/25'
+                  }`}
+              />
+              {errors.salePrice && <p className="text-xs text-error mt-1">{errors.salePrice}</p>}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                Inventory Stock Count <span className="text-error">*</span>
               </label>
               <input
                 type="number"
@@ -529,6 +595,34 @@ export const ProductsModule = () => {
                   }`}
               />
               {errors.stock && <p className="text-xs text-error mt-1">{errors.stock}</p>}
+            </div>
+          </div>
+
+          {/* Offer Badge / Tag & Live Savings calculation */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#FFF9F5] p-3 rounded-xl border border-soft-gray/20">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
+                Offer Tag / Badge <span className="text-[10px] text-soft-gray lowercase">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.offerTag || ''}
+                onChange={(e) => setFormData({ ...formData, offerTag: e.target.value })}
+                placeholder="e.g. Special Deal, Mega Offer, 25% OFF"
+                className="w-full px-3.5 py-2 rounded-lg border border-soft-gray/25 text-xs text-charcoal bg-white focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col justify-center">
+              {formData.price && formData.salePrice && parseFloat(formData.salePrice) < parseFloat(formData.price) ? (
+                <div className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg flex items-center gap-1.5 font-medium">
+                  <span className="font-bold">✨ Offer Active:</span>
+                  <span>Save {settings.currencySymbol || '₹'}{(parseFloat(formData.price) - parseFloat(formData.salePrice)).toFixed(0)} ({Math.round(((parseFloat(formData.price) - parseFloat(formData.salePrice)) / parseFloat(formData.price)) * 100)}% OFF)!</span>
+                </div>
+              ) : (
+                <p className="text-[11px] text-soft-gray italic">
+                  Leave Offer Price blank if this product sells at regular MRP.
+                </p>
+              )}
             </div>
           </div>
 
