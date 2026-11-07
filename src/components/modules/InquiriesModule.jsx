@@ -5,39 +5,23 @@ import {
   Mail,
   Phone,
   Calendar,
-  CheckCircle2,
-  Clock,
   Trash2,
   Eye,
-  ExternalLink,
   MessageCircle
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
-import { Badge } from '../common/Badge';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 export const InquiriesModule = () => {
-  const { inquiries = [], updateInquiryStatus, deleteInquiry } = useAdmin();
+  const { inquiries = [], deleteInquiry } = useAdmin();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [inquiryToDelete, setInquiryToDelete] = useState(null);
 
   const handleOpenDetail = (inquiry) => {
     setSelectedInquiry(inquiry);
-    if (inquiry.status === 'Unread') {
-      updateInquiryStatus(inquiry.id || inquiry._id, 'Read');
-      setSelectedInquiry({ ...inquiry, status: 'Read' });
-    }
-  };
-
-  const handleStatusChange = (newStatus) => {
-    if (!selectedInquiry) return;
-    const targetId = selectedInquiry.id || selectedInquiry._id;
-    updateInquiryStatus(targetId, newStatus);
-    setSelectedInquiry({ ...selectedInquiry, status: newStatus });
   };
 
   const handleDelete = (inquiryId) => {
@@ -46,18 +30,14 @@ export const InquiriesModule = () => {
 
   const filteredInquiries = inquiries.filter((inq) => {
     const term = searchTerm.toLowerCase();
-    const matchesSearch =
+    return (
       (inq.fullName || '').toLowerCase().includes(term) ||
       (inq.email || '').toLowerCase().includes(term) ||
       (inq.phone || '').toLowerCase().includes(term) ||
       (inq.subject || '').toLowerCase().includes(term) ||
-      (inq.message || '').toLowerCase().includes(term);
-
-    const matchesStatus = statusFilter === 'ALL' || inq.status === statusFilter;
-    return matchesSearch && matchesStatus;
+      (inq.message || '').toLowerCase().includes(term)
+    );
   });
-
-  const statusList = ['ALL', 'Unread', 'Read', 'Replied'];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -68,8 +48,8 @@ export const InquiriesModule = () => {
         </p>
       </div>
 
-      {/* Search & Filter Toolbar */}
-      <div className="bg-surface p-4 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col md:flex-row items-center gap-4">
+      {/* Search Toolbar */}
+      <div className="bg-surface p-4 rounded-2xl border border-soft-gray/20 shadow-card flex items-center gap-4">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-soft-gray absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -79,22 +59,6 @@ export const InquiriesModule = () => {
             placeholder="Search enquiries by customer name, email, phone, or keyword..."
             className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-soft-gray/25 bg-warm-ivory/40 text-charcoal placeholder-soft-gray focus:border-primary focus:bg-surface focus:ring-1 focus:ring-primary"
           />
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          {statusList.map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                statusFilter === status
-                  ? 'bg-primary text-surface shadow-sm'
-                  : 'bg-warm-ivory/60 text-soft-gray hover:text-charcoal hover:bg-warm-ivory'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -107,7 +71,6 @@ export const InquiriesModule = () => {
                 <th className="px-6 py-3.5">Customer</th>
                 <th className="px-6 py-3.5">Subject & Message</th>
                 <th className="px-6 py-3.5">Date</th>
-                <th className="px-6 py-3.5">Status</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
@@ -115,12 +78,7 @@ export const InquiriesModule = () => {
               {filteredInquiries.map((inquiry) => (
                 <tr key={inquiry.id || inquiry._id} className="hover:bg-warm-ivory/40 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-semibold text-charcoal flex items-center gap-1.5">
-                      {inquiry.fullName}
-                      {inquiry.status === 'Unread' && (
-                        <span className="w-2 h-2 rounded-full bg-primary shrink-0 animate-pulse" />
-                      )}
-                    </div>
+                    <div className="font-semibold text-charcoal">{inquiry.fullName}</div>
                     <div className="text-xs text-soft-gray">{inquiry.email}</div>
                     {inquiry.phone && (
                       <div className="text-[11px] text-soft-gray flex items-center gap-1 mt-0.5">
@@ -143,20 +101,6 @@ export const InquiriesModule = () => {
                       month: 'short',
                       year: 'numeric'
                     }) : 'Recent'}
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <Badge
-                      variant={
-                        inquiry.status === 'Replied'
-                          ? 'success'
-                          : inquiry.status === 'Read'
-                          ? 'accent'
-                          : 'primary'
-                      }
-                    >
-                      {inquiry.status}
-                    </Badge>
                   </td>
 
                   <td className="px-6 py-4 text-right">
@@ -203,10 +147,10 @@ export const InquiriesModule = () => {
 
               {filteredInquiries.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-sm text-soft-gray">
+                  <td colSpan="4" className="text-center py-12 text-sm text-soft-gray">
                     {inquiries.length === 0
                       ? 'No customer enquiries received yet. Enquiries submitted via the Contact Us page will appear here.'
-                      : 'No enquiries match the current search or status filter.'}
+                      : 'No enquiries match the current search.'}
                   </td>
                 </tr>
               )}
@@ -235,19 +179,14 @@ export const InquiriesModule = () => {
                   )}
                 </div>
                 <div className="text-right">
-                  <Badge
-                    variant={
-                      selectedInquiry.status === 'Replied'
-                        ? 'success'
-                        : selectedInquiry.status === 'Read'
-                        ? 'accent'
-                        : 'primary'
-                    }
-                  >
-                    {selectedInquiry.status}
-                  </Badge>
-                  <p className="text-[11px] text-soft-gray mt-1">
-                    {selectedInquiry.createdAt ? new Date(selectedInquiry.createdAt).toLocaleString() : ''}
+                  <p className="text-xs text-soft-gray">
+                    {selectedInquiry.createdAt ? new Date(selectedInquiry.createdAt).toLocaleString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : ''}
                   </p>
                 </div>
               </div>
@@ -267,7 +206,6 @@ export const InquiriesModule = () => {
             <div className="flex items-center justify-end gap-2 pt-2">
               <a
                 href={`mailto:${selectedInquiry.email}?subject=Regarding your RS Gifts Enquiry: ${encodeURIComponent(selectedInquiry.subject || '')}`}
-                onClick={() => handleStatusChange('Replied')}
                 className="px-3.5 py-1.5 rounded-xl bg-primary text-surface text-xs font-semibold hover:bg-primary/90 flex items-center gap-1.5 transition-colors"
               >
                 <Mail className="w-3.5 h-3.5" />
@@ -277,7 +215,6 @@ export const InquiriesModule = () => {
               {selectedInquiry.phone && (
                 <a
                   href={`https://wa.me/${selectedInquiry.phone.replace(/[^0-9]/g, '')}?text=Hi%20${encodeURIComponent(selectedInquiry.fullName)},%20thank%20you%20for%20reaching%20out%20to%20RS%20Gifts!`}
-                  onClick={() => handleStatusChange('Replied')}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-surface text-xs font-semibold hover:bg-emerald-700 flex items-center gap-1.5 transition-colors"
@@ -311,4 +248,5 @@ export const InquiriesModule = () => {
     </div>
   );
 };
+
 export default InquiriesModule;
