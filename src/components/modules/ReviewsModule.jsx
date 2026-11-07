@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, CheckCircle, EyeOff, Eye, Trash2, Search, MessageSquare, AlertCircle, Check } from 'lucide-react';
+import { Star, CheckCircle, EyeOff, Eye, Trash2, Search, MessageSquare, AlertCircle, Check, Package } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { Badge } from '../common/Badge';
@@ -112,12 +112,13 @@ export const ReviewsModule = () => {
           const isVisible = review.status === 'approved' || review.isApproved === true;
           const reviewId = review.id || review._id;
           const matchedProduct = (products || []).find((p) => {
-            const pid = review.productId || review.product?._id || review.product?.id || review.product;
-            if (pid && (p.id === pid || p._id === pid)) return true;
+            const pid = review.productId || review.product?._id || review.product?.id || (typeof review.product === 'string' ? review.product : '');
+            if (pid && (String(p.id) === String(pid) || String(p._id) === String(pid))) return true;
             if (review.productTitle && p.title && p.title.trim().toLowerCase() === review.productTitle.trim().toLowerCase()) return true;
             return false;
           });
-          const productImage = review.productImage || review.product?.image || matchedProduct?.image || matchedProduct?.gallery?.[0] || '';
+          const productTitle = review.productTitle || review.product?.title || matchedProduct?.title || 'Store Gift Item';
+          const productImage = review.productImage || review.product?.image || (Array.isArray(review.product?.gallery) && review.product.gallery[0]) || matchedProduct?.image || (Array.isArray(matchedProduct?.gallery) && matchedProduct.gallery[0]) || '';
 
           return (
             <div
@@ -125,14 +126,14 @@ export const ReviewsModule = () => {
               className="bg-surface p-5 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col justify-between transition-all hover:border-soft-gray/40"
             >
               <div>
-                {/* Card Header: Product Title & Rating */}
-                <div className="pb-2">
-                  <div className="min-w-0">
+                {/* Card Header: Product Title, Rating & Dynamic Product Thumbnail on Right */}
+                <div className="flex items-start justify-between gap-3 pb-2">
+                  <div className="min-w-0 flex-1">
                     <span className="text-[11px] font-semibold uppercase text-primary tracking-wider block">
                       Product
                     </span>
-                    <h4 className="font-semibold text-sm text-charcoal truncate mt-0.5" title={review.productTitle}>
-                      {review.productTitle || 'Store Gift Item'}
+                    <h4 className="font-semibold text-sm text-charcoal truncate mt-0.5" title={productTitle}>
+                      {productTitle}
                     </h4>
                     <div className="flex items-center gap-2 mt-1">
                       <div className="flex items-center gap-0.5 text-accent">
@@ -153,6 +154,32 @@ export const ReviewsModule = () => {
                         Hidden from Website
                       </span>
                     )}
+                  </div>
+
+                  {/* Dynamic Product Thumbnail (Top-Right) */}
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-warm-ivory/60 border border-soft-gray/25 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                    {productImage ? (
+                      <img
+                        src={productImage}
+                        alt={productTitle}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                          if (e.target.nextElementSibling) {
+                            e.target.nextElementSibling.style.display = 'flex';
+                          }
+                        }}
+                      />
+                    ) : null}
+                    <div
+                      className={`w-full h-full flex flex-col items-center justify-center text-soft-gray bg-warm-ivory/50 ${
+                        productImage ? 'hidden' : 'flex'
+                      }`}
+                    >
+                      <Package className="w-6 h-6 text-primary/60" />
+                      <span className="text-[9px] font-medium text-soft-gray mt-0.5">RS Gifts</span>
+                    </div>
                   </div>
                 </div>
 
