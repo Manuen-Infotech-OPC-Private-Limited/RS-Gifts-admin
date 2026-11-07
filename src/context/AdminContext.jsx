@@ -30,7 +30,7 @@ export const ensure6DigitProductId = (val, fallbackSeed = '') => {
   return String(Math.abs(hash) % 900000 + 100000);
 };
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import apiClient from '../services/api';
 import customerService from '../services/customerService';
 import {
@@ -139,48 +139,49 @@ export const AdminProvider = ({ children }) => {
     }
   }, [state]);
 
+  // Refresh live products from MongoDB Backend
+  const refreshLiveProducts = useCallback(async () => {
+    try {
+      const res = await apiClient.get('/admin/products');
+      const live = res.data?.products || [];
+      if (live.length > 0) {
+        setState(prev => ({
+          ...prev,
+          products: live.map(p => ({
+            ...p,
+            id: p._id || p.id,
+            _id: p._id || p.id,
+            productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id),
+          }))
+        }));
+        return;
+      }
+    } catch {
+      // Fallback to customer products if admin endpoint is not authorized yet
+    }
+
+    try {
+      const res = await apiClient.get('/customer/products');
+      const live = res.data?.products || (Array.isArray(res.data) ? res.data : []);
+      if (live.length > 0) {
+        setState(prev => ({
+          ...prev,
+          products: live.map(p => ({
+            ...p,
+            id: p._id || p.id,
+            _id: p._id || p.id,
+            productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id),
+          }))
+        }));
+      }
+    } catch (err) {
+      console.warn('Could not load live backend products:', err.message);
+    }
+  }, []);
+
   // Load live products & banners from MongoDB Atlas Backend on Mount
   useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const res = await apiClient.get('/admin/products');
-        const live = res.data?.products || [];
-        if (live.length > 0) {
-          setState(prev => ({
-            ...prev,
-            products: live.map(p => ({
-              ...p,
-              id: p._id || p.id,
-              _id: p._id || p.id,
-              productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id),
-            }))
-          }));
-          return;
-        }
-      } catch {
-        // Fallback to customer products if admin endpoint is not authorized yet
-      }
-
-      try {
-        const res = await apiClient.get('/customer/products');
-        const live = res.data?.products || (Array.isArray(res.data) ? res.data : []);
-        if (live.length > 0) {
-          setState(prev => ({
-            ...prev,
-            products: live.map(p => ({
-              ...p,
-              id: p._id || p.id,
-              _id: p._id || p.id,
-              productId: ensure6DigitProductId(p.productId || p.sku, p._id || p.id),
-            }))
-          }));
-        }
-      } catch (err) {
-        console.warn('Could not load live backend products:', err.message);
-      }
-    };
-
-    loadProducts();
+    refreshLiveProducts();
 
     const loadCategories = async () => {
       try {
@@ -818,6 +819,10 @@ export const AdminProvider = ({ children }) => {
       const target = state.orders.find(o => o.id === orderId || o._id === orderId || o.orderNumber === orderId);
       const targetId = target?._id || target?.orderNumber || orderId;
       await apiClient.patch(`/admin/orders/${targetId}/status`, { status: newStatus });
+      // When marked Delivered (stock decreases) or moved away from Delivered, refresh live products immediately
+      if (newStatus === 'Delivered' || target?.orderStatus === 'Delivered') {
+        refreshLiveProducts();
+      }
     } catch (err) {
       console.warn('Backend order status update note:', err?.message);
     }
@@ -874,6 +879,9 @@ export const AdminProvider = ({ children }) => {
       const target = state.orders.find(o => o.id === orderId || o._id === orderId);
       const targetId = target?._id || orderId;
       await apiClient.delete(`/admin/orders/${targetId}`);
+      if (target?.orderStatus === 'Delivered') {
+        refreshLiveProducts();
+      }
     } catch (err) {
       console.warn('Backend order deletion note:', err?.message);
     }
@@ -1464,6 +1472,7 @@ export const AdminProvider = ({ children }) => {
         deleteInquiry,
         updateProductStock,
         adjustStock,
+        refreshProducts: refreshLiveProducts,
         addCoupon,
         updateCoupon,
         deleteCoupon,
