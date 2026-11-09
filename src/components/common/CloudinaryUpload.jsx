@@ -314,11 +314,7 @@ export const CloudinaryUpload = ({
                 disabled={uploading}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#821D38] hover:bg-[#6E162E] text-white font-semibold text-xs sm:text-sm shadow-xs transition-all cursor-pointer active:scale-[0.99] disabled:opacity-50"
               >
-                {uploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
+                <Upload className="w-4 h-4" />
                 <span>{currentPreview ? 'Upload / Add Image' : 'Upload Image'}</span>
               </button>
 
