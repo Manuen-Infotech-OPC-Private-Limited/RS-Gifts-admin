@@ -11,13 +11,8 @@ export const uploadToCloudinary = async (file, cloudName, uploadPreset) => {
   try {
     const formData = new FormData();
     formData.append('image', file);
-    const token = localStorage.getItem('rs_admin_token');
-    const headers = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const backendRes = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
-      headers,
       body: formData,
     });
     if (backendRes.ok) {
@@ -91,13 +86,8 @@ export const uploadMultipleFiles = async (files, cloudName, uploadPreset) => {
     validFiles.forEach((file) => {
       formData.append('images', file);
     });
-    const token = localStorage.getItem('rs_admin_token');
-    const headers = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     const backendRes = await fetch(`${API_BASE_URL}/upload/multiple`, {
       method: 'POST',
-      headers,
       body: formData,
     });
     if (backendRes.ok) {

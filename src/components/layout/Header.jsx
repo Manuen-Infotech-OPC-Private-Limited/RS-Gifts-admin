@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, Bell, Search, User, Gift, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Link, useNavigate } from 'react-router-dom';
+import apiClient from '../../services/api';
 
 export const Header = ({ onOpenSidebar }) => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ export const Header = ({ onOpenSidebar }) => {
   const totalNotifications = pendingOrders.length + lowStockItems.length;
 
   const handleLogout = () => {
+    // Invalidate server-side admin session in MongoDB
+    apiClient.post('/admin/auth/logout').catch(() => null);
     localStorage.removeItem('rs_admin_token');
     localStorage.removeItem('rs_admin_user');
     navigate('/login', { replace: true });
