@@ -4,7 +4,7 @@
  * or returns direct URL if provided.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rs-gifts-backend.onrender.com/api';
 
 export const uploadToCloudinary = async (file, cloudName, uploadPreset) => {
   // 1. Primary: Upload via backend /api/upload (uses active server-side Cloudinary credentials)

@@ -1,9 +1,17 @@
 import axios from 'axios';
 
+// Resolve backend API URL (Defaults to live Render Cloud backend so both local and online operate seamlessly)
+const resolveBaseURL = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return 'https://rs-gifts-backend.onrender.com/api';
+};
+
 // Configured Axios instance
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
-  timeout: 10000,
+  baseURL: resolveBaseURL(),
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
