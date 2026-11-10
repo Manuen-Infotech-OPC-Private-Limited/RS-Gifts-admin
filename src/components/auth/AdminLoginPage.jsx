@@ -155,7 +155,7 @@ export const AdminLoginPage = () => {
               </>
             ) : (
               <>
-                <span>Sign In to Dashboard</span>
+                <span>Sign In</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
