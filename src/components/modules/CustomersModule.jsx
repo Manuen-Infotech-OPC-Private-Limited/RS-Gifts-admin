@@ -97,47 +97,17 @@ export const CustomersModule = () => {
 
   const selectedOrders = selectedCustomer ? getCustomerOrders(selectedCustomer) : [];
 
-  // Aggregated addresses from user profile + all order shipping addresses
-  const getCustomerAddresses = (customer, customerOrders) => {
+  // Customer delivery addresses from user profile
+  const getCustomerAddresses = (customer) => {
     if (!customer) return [];
     const list = [...(customer.addresses || [])];
 
-    (customerOrders || []).forEach((order) => {
-      const s = order.shippingAddress;
-      if (s && (s.addressLine1 || s.city)) {
-        const fullAddrStr = [s.addressLine1, s.addressLine2, s.city, s.state, s.postalCode].filter(Boolean).join(', ');
-        const exists = list.some((a) => {
-          const aFull = [a.addressLine1, a.addressLine2, a.city, a.state, a.postalCode].filter(Boolean).join(', ');
-          const aLine1 = (a.addressLine1 || '').trim().toLowerCase();
-          const sLine1 = (s.addressLine1 || '').trim().toLowerCase();
-          return aFull.toLowerCase() === fullAddrStr.toLowerCase() || (aLine1 && sLine1 && aLine1 === sLine1);
-        });
-
-        if (!exists) {
-          list.push({
-            id: order.id || order._id,
-            _id: order.id || order._id,
-            recipientName: s.recipientName || customer.name,
-            phone: s.phone || customer.phone || '',
-            addressLine1: s.addressLine1,
-            addressLine2: s.addressLine2 || '',
-            city: s.city,
-            state: s.state,
-            postalCode: s.postalCode,
-            country: s.country || 'India',
-            isDefault: list.length === 0,
-            source: `Order #${order.orderNumber || order.id || order._id}`,
-          });
-        }
-      }
-    });
-
     if (list.length === 0 && customer.address && customer.address !== '—' && customer.address !== 'Not provided') {
       list.push({
-        id: 'primary',
-        _id: 'primary',
-        recipientName: customer.name,
-        phone: customer.phone,
+        id: 'registered_addr',
+        _id: 'registered_addr',
+        recipientName: customer.name || 'Registered Customer',
+        phone: customer.phone || '',
         addressLine1: customer.address,
         isDefault: true,
       });
@@ -146,7 +116,7 @@ export const CustomersModule = () => {
     return list;
   };
 
-  const customerAddresses = selectedCustomer ? getCustomerAddresses(selectedCustomer, selectedOrders) : [];
+  const customerAddresses = selectedCustomer ? getCustomerAddresses(selectedCustomer) : [];
 
   const primaryAddressText = useMemo(() => {
     if (!selectedCustomer) return 'Not provided';
@@ -571,18 +541,11 @@ export const CustomersModule = () => {
                       key={addr._id || addr.id || idx}
                       className="p-4 rounded-xl border border-soft-gray/20 bg-surface space-y-1.5"
                     >
-                      {(addr.source || addr.isDefault) && (
+                      {addr.isDefault && (
                         <div className="flex items-center gap-1.5 justify-end">
-                          {addr.source && (
-                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-warm-ivory text-soft-gray border border-soft-gray/20">
-                              {addr.source}
-                            </span>
-                          )}
-                          {addr.isDefault && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                              Default Address
-                            </span>
-                          )}
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            Default Address
+                          </span>
                         </div>
                       )}
                       <p className="text-xs text-soft-gray">
