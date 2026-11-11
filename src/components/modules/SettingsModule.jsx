@@ -12,12 +12,14 @@ import {
   Mail,
   MapPin,
   Clock,
+  Loader2,
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
 
 export const SettingsModule = () => {
   const { settings, updateSettings } = useAdmin();
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
 
   const [formData, setFormData] = useState({
     storeLogo: '',
@@ -61,12 +63,19 @@ export const SettingsModule = () => {
     }
   }, [settings]);
 
-  const handleSaveLogo = (e) => {
+  const handleSaveLogo = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    updateSettings({
-      ...formData,
-      storeLogo: formData.storeLogo || '',
-    });
+    setIsSavingLogo(true);
+    try {
+      await updateSettings({
+        ...formData,
+        storeLogo: (formData.storeLogo || '').trim(),
+      });
+    } catch (err) {
+      console.error('Error saving logo:', err);
+    } finally {
+      setIsSavingLogo(false);
+    }
   };
 
   const handleSaveDelivery = (e) => {
@@ -301,24 +310,45 @@ export const SettingsModule = () => {
             <Store className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-charcoal">Logo</h3>
-
+            <h3 className="text-base font-bold text-charcoal">Store Logo</h3>
+            <p className="text-xs text-soft-gray">
+              Upload brand logo displayed on the customer navigation bar, footer, and admin sidebar. Transparent PNG or WEBP recommended.
+            </p>
           </div>
         </div>
 
         <div>
           <CloudinaryUpload
             value={formData.storeLogo || ''}
-            onChange={(url) => setFormData(prev => ({ ...prev, storeLogo: url }))}
+            onChange={(url) => {
+              const newLogo = url || '';
+              setFormData(prev => ({ ...prev, storeLogo: newLogo }));
+              // Auto-save immediately to MongoDB backend so customer storefront reflects it instantly
+              updateSettings({
+                ...formData,
+                storeLogo: newLogo,
+              });
+            }}
             label=""
+            hint="Changes persist immediately and update customer storefront in real-time."
           >
             <button
               type="button"
+              disabled={isSavingLogo}
               onClick={handleSaveLogo}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer disabled:opacity-60"
             >
-              <Save className="w-4 h-4" />
-              Save Logo
+              {isSavingLogo ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving Logo...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Logo
+                </>
+              )}
             </button>
           </CloudinaryUpload>
         </div>

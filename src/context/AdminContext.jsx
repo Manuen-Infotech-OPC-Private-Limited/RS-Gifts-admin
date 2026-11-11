@@ -309,7 +309,7 @@ export const AdminProvider = ({ children }) => {
       });
 
     // Load live settings from backend API
-    apiClient.get('/admin/settings')
+    apiClient.get(`/admin/settings?_t=${Date.now()}`)
       .then(res => {
         if (res.data?.settings) {
           setState(prev => ({
@@ -332,7 +332,7 @@ export const AdminProvider = ({ children }) => {
         }
       })
       .catch(() => {
-        apiClient.get('/customer/content/settings')
+        apiClient.get(`/customer/content/settings?_t=${Date.now()}`)
           .then(res => {
             if (res.data?.settings) {
               setState(prev => ({

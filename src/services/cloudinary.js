@@ -94,8 +94,16 @@ export const uploadMultipleFiles = async (files, cloudName, uploadPreset) => {
     validFiles.forEach((file) => {
       formData.append('images', file);
     });
+
+    const headers = {};
+    const adminToken = localStorage.getItem('rs_admin_token');
+    if (adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+
     const backendRes = await fetch(`${API_BASE_URL}/upload/multiple`, {
       method: 'POST',
+      headers,
       body: formData,
     });
     if (backendRes.ok) {

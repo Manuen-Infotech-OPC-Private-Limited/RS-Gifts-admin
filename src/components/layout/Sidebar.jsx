@@ -16,6 +16,22 @@ import {
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 
+const resolveLogoUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  const clean = url.trim();
+  if (clean.startsWith('data:') || clean.startsWith('blob:') || clean.startsWith('https://')) return clean;
+  if (clean.startsWith('http://res.cloudinary.com')) return clean.replace(/^http:\/\//i, 'https://');
+  if (clean.startsWith('/uploads/') || clean.startsWith('uploads/')) {
+    const p = clean.startsWith('/') ? clean : `/${clean}`;
+    return `https://rs-gifts-backend.onrender.com${p}`;
+  }
+  if (clean.includes('localhost:5000') || clean.includes('127.0.0.1:5000')) {
+    return clean.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000/, 'https://rs-gifts-backend.onrender.com');
+  }
+  if (clean.startsWith('http://')) return clean.replace(/^http:\/\//i, 'https://');
+  return clean;
+};
+
 export const Sidebar = ({ isOpen, onClose }) => {
   const { products, orders, unreadInquiriesCount, settings } = useAdmin();
 
@@ -88,7 +104,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <div className="w-12 h-12 rounded-2xl bg-transparent flex items-center justify-center text-primary flex-shrink-0 overflow-hidden">
               {settings.storeLogo ? (
                 <img
-                  src={settings.storeLogo}
+                  src={resolveLogoUrl(settings.storeLogo)}
                   alt={settings.storeName || 'RS GIFTS'}
                   className="w-full h-full object-cover"
                   onError={(e) => {
