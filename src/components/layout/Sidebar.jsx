@@ -101,7 +101,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       >
         <div className="h-20 flex items-center justify-between px-6 border-b border-soft-gray/15 bg-white">
           <div className="flex items-center gap-3.5 select-none">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-soft-gray/15 flex items-center justify-center text-primary flex-shrink-0 overflow-hidden shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-white border border-soft-gray/15 flex items-center justify-center text-primary flex-shrink-0 overflow-hidden shadow-xs">
               {settings.storeLogo ? (
                 <img
                   src={resolveLogoUrl(settings.storeLogo)}

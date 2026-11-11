@@ -35,7 +35,7 @@ export const Header = ({ onOpenSidebar }) => {
 
         {/* Mobile brand header with white logo background */}
         <div className="flex items-center gap-2.5 lg:hidden">
-          <div className="w-9 h-9 rounded-xl bg-white border border-soft-gray/15 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-white border border-soft-gray/15 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
             {settings?.storeLogo ? (
               <img
                 src={resolveLogoUrl(settings.storeLogo)}
