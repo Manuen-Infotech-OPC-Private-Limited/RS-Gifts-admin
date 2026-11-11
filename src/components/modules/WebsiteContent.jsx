@@ -10,6 +10,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { Modal } from '../common/Modal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { CloudinaryUpload } from '../common/CloudinaryUpload';
+import { resolveImageUrl } from '../../utils/urlHelper';
 
 export const WebsiteContent = () => {
   const {
@@ -164,12 +165,17 @@ export const WebsiteContent = () => {
                 >
                   <div className="h-44 relative overflow-hidden rounded-t-[15px] bg-[#FAF6F4]">
                     <img
-                      src={banner.imageUrl || banner.image}
+                      src={resolveImageUrl(banner.imageUrl || banner.image, '/images/hero-banner-1.png')}
                       alt={banner.title}
                       className="w-full h-full object-cover rounded-t-[15px]"
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = '/images/hero-banner-1.png';
+                        const fallback = resolveImageUrl('/images/hero-banner-1.png');
+                        if (e.target.src !== fallback) {
+                          e.target.src = fallback;
+                        } else {
+                          e.target.style.display = 'none';
+                        }
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-5">
@@ -296,12 +302,17 @@ export const WebsiteContent = () => {
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={p.image}
+                          src={resolveImageUrl(p.image, '/images/products/teddy-bear.png')}
                           alt={p.title}
                           className="w-12 h-12 rounded-xl object-cover border border-soft-gray/20 shrink-0"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = '/images/products/teddy-bear.png';
+                            const fallback = resolveImageUrl('/images/products/teddy-bear.png');
+                            if (e.target.src !== fallback) {
+                              e.target.src = fallback;
+                            } else {
+                              e.target.style.display = 'none';
+                            }
                           }}
                         />
                         <div className="min-w-0">

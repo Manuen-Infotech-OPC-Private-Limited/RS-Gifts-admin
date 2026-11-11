@@ -40,6 +40,52 @@ export const resolveLogoUrl = (url) => {
 };
 
 /**
+ * Resolves static, backend, or Cloudinary image URLs safely with base path awareness.
+ * Prevents 404s when images are referenced via relative paths (/images/...).
+ */
+export const resolveImageUrl = (img, fallback = '') => {
+  if (!img || typeof img !== 'string' || !img.trim()) {
+    return fallback ? resolveImageUrl(fallback) : '';
+  }
+  const clean = img.trim();
+
+  // Data URLs or blobs
+  if (clean.startsWith('data:') || clean.startsWith('blob:')) {
+    return clean;
+  }
+
+  // Cloudinary HTTPS or upgrade HTTP
+  if (clean.startsWith('https://res.cloudinary.com')) {
+    return clean;
+  }
+  if (clean.startsWith('http://res.cloudinary.com')) {
+    return clean.replace(/^http:\/\//i, 'https://');
+  }
+
+  // Rewrite localhost backend to production Render backend
+  if (clean.includes('localhost:5000') || clean.includes('127.0.0.1:5000')) {
+    return clean.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000/, 'https://rs-gifts-backend.onrender.com');
+  }
+
+  // Relative backend static upload path
+  if (clean.startsWith('/uploads/') || clean.startsWith('uploads/')) {
+    const p = clean.startsWith('/') ? clean : `/${clean}`;
+    return `https://rs-gifts-backend.onrender.com${p}`;
+  }
+
+  // Full external URL
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return clean.startsWith('http://') ? clean.replace(/^http:\/\//i, 'https://') : clean;
+  }
+
+  // Local static asset in public folder (e.g. /images/hero-banner-1.png)
+  const base = import.meta.env?.BASE_URL || '/';
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  const relative = clean.startsWith('/') ? clean.slice(1) : clean;
+  return `${prefix}${relative}`;
+};
+
+/**
  * Dynamically updates the browser tab favicon to the store logo.
  * Replaces existing favicon links to force instant browser refresh.
  */
