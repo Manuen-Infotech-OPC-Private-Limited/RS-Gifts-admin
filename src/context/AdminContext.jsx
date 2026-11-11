@@ -1375,17 +1375,29 @@ export const AdminProvider = ({ children }) => {
     });
 
     try {
-      await apiClient.put('/admin/settings', updatedSettings);
+      const res = await apiClient.put('/admin/settings', updatedSettings);
+      if (res?.data?.settings) {
+        setState(prev => ({
+          ...prev,
+          settings: { ...prev.settings, ...res.data.settings }
+        }));
+      }
+      try {
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('rs_gifts_settings_updated', { detail: updatedSettings }));
+      } catch (e) { }
+      showToast('Store settings saved to server successfully!');
+      return res?.data;
     } catch (err) {
-      console.warn('Backend updateSettings error:', err.message);
+      console.error('Backend updateSettings error:', err);
+      const isAuth = err.response?.status === 401 || err.response?.status === 403;
+      if (isAuth) {
+        showToast('Admin session expired. Please log out and log in again to save changes.', 'error');
+      } else {
+        showToast('Failed to save settings: ' + (err.response?.data?.message || err.message || 'Server error'), 'error');
+      }
+      throw err;
     }
-
-    try {
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('rs_gifts_settings_updated', { detail: updatedSettings }));
-    } catch (e) { }
-
-    showToast('Store settings saved successfully!');
   };
 
   const refreshCustomers = async (search = '') => {

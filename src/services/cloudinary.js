@@ -34,8 +34,13 @@ export const uploadToCloudinary = async (file, cloudName, uploadPreset) => {
           provider: data.provider || 'cloudinary'
         };
       }
+    } else if (backendRes.status === 401 || backendRes.status === 403) {
+      throw new Error('Admin session expired (401). Please log in again to upload images to the server.');
     }
   } catch (backendErr) {
+    if (backendErr.message && backendErr.message.includes('session expired')) {
+      throw backendErr;
+    }
     console.warn('Backend Cloudinary upload route failed, trying fallback...', backendErr);
   }
 

@@ -352,6 +352,31 @@ export const SettingsModule = () => {
             </button>
           </CloudinaryUpload>
         </div>
+
+        {/* Direct URL Input Fallback */}
+        <div className="pt-2 border-t border-soft-gray/15">
+          <label className="text-xs font-semibold text-charcoal block mb-1.5">
+            Or Paste Direct Logo Image URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              placeholder="https://res.cloudinary.com/... or https://..."
+              value={formData.storeLogo || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, storeLogo: e.target.value }))}
+              className="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-soft-gray/30 bg-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-charcoal font-medium placeholder:text-soft-gray/50"
+            />
+            <button
+              type="button"
+              disabled={isSavingLogo}
+              onClick={handleSaveLogo}
+              className="px-5 py-2.5 rounded-xl bg-primary text-surface font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm cursor-pointer disabled:opacity-60 shrink-0 inline-flex items-center gap-1.5"
+            >
+              {isSavingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Save URL
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Social Media Links Section */}
