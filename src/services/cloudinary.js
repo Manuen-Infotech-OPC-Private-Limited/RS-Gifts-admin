@@ -11,8 +11,16 @@ export const uploadToCloudinary = async (file, cloudName, uploadPreset) => {
   try {
     const formData = new FormData();
     formData.append('image', file);
+
+    const headers = {};
+    const adminToken = localStorage.getItem('rs_admin_token');
+    if (adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+
     const backendRes = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
+      headers,
       body: formData,
     });
     if (backendRes.ok) {
