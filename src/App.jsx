@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { DashboardModule } from './components/modules/DashboardModule';
@@ -14,8 +14,23 @@ import { InquiriesModule } from './components/modules/InquiriesModule';
 import { SettingsModule } from './components/modules/SettingsModule';
 import { AdminLoginPage } from './components/auth/AdminLoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { updateTabFavicon } from './utils/urlHelper';
 
 export function App() {
+  useEffect(() => {
+    try {
+      const savedLogo = localStorage.getItem('rs_gifts_store_logo');
+      if (savedLogo) updateTabFavicon(savedLogo);
+    } catch (e) {}
+
+    const handleStorage = (e) => {
+      if (e.key === 'rs_gifts_store_logo' && e.newValue) {
+        updateTabFavicon(e.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
   return (
     <Routes>
       {/* Public Login Route */}

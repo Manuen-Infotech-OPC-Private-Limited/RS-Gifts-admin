@@ -33,6 +33,7 @@ export const ensure6DigitProductId = (val, fallbackSeed = '') => {
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import apiClient from '../services/api';
 import customerService from '../services/customerService';
+import { updateTabFavicon } from '../utils/urlHelper';
 import {
   initialCategories,
   initialOccasions,
@@ -319,6 +320,7 @@ export const AdminProvider = ({ children }) => {
           if (res.data.settings.storeLogo !== undefined) {
             try {
               localStorage.setItem('rs_gifts_store_logo', res.data.settings.storeLogo || '');
+              if (res.data.settings.storeLogo) updateTabFavicon(res.data.settings.storeLogo);
             } catch (e) { }
           }
           try {
@@ -342,6 +344,7 @@ export const AdminProvider = ({ children }) => {
               if (res.data.settings.storeLogo !== undefined) {
                 try {
                   localStorage.setItem('rs_gifts_store_logo', res.data.settings.storeLogo || '');
+                  if (res.data.settings.storeLogo) updateTabFavicon(res.data.settings.storeLogo);
                 } catch (e) { }
               }
               try {
@@ -1360,6 +1363,7 @@ export const AdminProvider = ({ children }) => {
         window.dispatchEvent(new CustomEvent('rs_gifts_contact_updated', { detail: contactData }));
         if (merged.storeLogo !== undefined) {
           localStorage.setItem('rs_gifts_store_logo', merged.storeLogo || '');
+          if (merged.storeLogo) updateTabFavicon(merged.storeLogo);
         }
         localStorage.setItem('rs_gifts_social_links', JSON.stringify({
           facebook: merged.facebookUrl || '',
@@ -1381,6 +1385,9 @@ export const AdminProvider = ({ children }) => {
           ...prev,
           settings: { ...prev.settings, ...res.data.settings }
         }));
+        if (res.data.settings.storeLogo) {
+          updateTabFavicon(res.data.settings.storeLogo);
+        }
       }
       try {
         window.dispatchEvent(new Event('storage'));
