@@ -99,14 +99,14 @@ export const Sidebar = ({ isOpen, onClose }) => {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-20 flex items-center justify-between px-6 border-b border-soft-gray/15 bg-warm-ivory/60">
+        <div className="h-20 flex items-center justify-between px-6 border-b border-soft-gray/15 bg-white">
           <div className="flex items-center gap-3.5 select-none">
-            <div className="w-12 h-12 rounded-2xl bg-transparent flex items-center justify-center text-primary flex-shrink-0 overflow-hidden">
+            <div className="w-12 h-12 rounded-2xl bg-white border border-soft-gray/15 flex items-center justify-center text-primary flex-shrink-0 overflow-hidden shadow-xs">
               {settings.storeLogo ? (
                 <img
                   src={resolveLogoUrl(settings.storeLogo)}
                   alt={settings.storeName || 'RS GIFTS'}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain p-0.5 bg-white mix-blend-multiply [filter:contrast(1.15)_brightness(1.03)]"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.style.display = 'none';
@@ -117,7 +117,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 />
               ) : null}
               <div
-                className={`w-full h-full items-center justify-center text-primary ${
+                className={`w-full h-full items-center justify-center text-primary bg-white ${
                   settings.storeLogo ? 'hidden' : 'flex'
                 }`}
               >

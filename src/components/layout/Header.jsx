@@ -3,6 +3,7 @@ import { Menu, Bell, Search, User, Gift, ExternalLink, AlertTriangle } from 'luc
 import { useAdmin } from '../../context/AdminContext';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../../services/api';
+import { resolveLogoUrl } from '../../utils/urlHelper';
 
 export const Header = ({ onOpenSidebar }) => {
   const navigate = useNavigate();
@@ -31,6 +32,29 @@ export const Header = ({ onOpenSidebar }) => {
         >
           <Menu className="w-5 h-5" />
         </button>
+
+        {/* Mobile brand header with white logo background */}
+        <div className="flex items-center gap-2.5 lg:hidden">
+          <div className="w-9 h-9 rounded-xl bg-white border border-soft-gray/15 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+            {settings?.storeLogo ? (
+              <img
+                src={resolveLogoUrl(settings.storeLogo)}
+                alt={settings.storeName || 'RS GIFTS'}
+                className="w-full h-full object-contain p-0.5 bg-white mix-blend-multiply [filter:contrast(1.15)_brightness(1.03)]"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div className={`w-full h-full items-center justify-center text-primary bg-white ${settings?.storeLogo ? 'hidden' : 'flex'}`}>
+              <Gift className="w-4 h-4 text-primary" />
+            </div>
+          </div>
+          <span className="font-bold text-sm text-charcoal truncate">
+            {settings?.storeName || 'RS GIFTS'}
+          </span>
+        </div>
 
         <div className="relative w-full hidden sm:block">
           <Search className="w-4 h-4 text-soft-gray absolute left-3.5 top-1/2 -translate-y-1/2" />
