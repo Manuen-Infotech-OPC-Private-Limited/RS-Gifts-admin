@@ -34,6 +34,7 @@ export const WebsiteContent = () => {
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
   const [bannerForm, setBannerForm] = useState({
+    tagline: '',
     title: '',
     subtitle: '',
     buttonText: '',
@@ -47,10 +48,11 @@ export const WebsiteContent = () => {
   const handleOpenAddBanner = () => {
     setEditingBanner(null);
     setBannerForm({
+      tagline: '',
       title: '',
       subtitle: '',
       buttonText: 'Shop Gifts',
-      buttonLink: '/products',
+      buttonLink: '/gifts',
       imageUrl: ''
     });
     setBannerErrors({});
@@ -60,10 +62,11 @@ export const WebsiteContent = () => {
   const handleOpenEditBanner = (b) => {
     setEditingBanner(b);
     setBannerForm({
+      tagline: b.tagline || '',
       title: b.title || '',
       subtitle: b.subtitle || '',
       buttonText: b.buttonText || 'Shop Gifts',
-      buttonLink: b.buttonLink || b.link || '/products',
+      buttonLink: b.buttonLink || b.link || '/gifts',
       imageUrl: b.imageUrl || b.image || '',
     });
     setBannerErrors({});
@@ -179,6 +182,11 @@ export const WebsiteContent = () => {
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-5">
+                      {banner.tagline && (
+                        <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider mb-0.5 drop-shadow-sm">
+                          {banner.tagline}
+                        </span>
+                      )}
                       <h3 className="text-white font-bold text-lg leading-snug drop-shadow-md">
                         {banner.title}
                       </h3>

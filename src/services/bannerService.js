@@ -23,10 +23,11 @@ export const bannerService = {
   // Create banner
   async createBanner(bannerData) {
     const res = await apiClient.post('/admin/content/banners', {
+      tagline: bannerData.tagline || '',
       title: bannerData.title,
       subtitle: bannerData.subtitle,
       image: bannerData.imageUrl || bannerData.image,
-      link: bannerData.buttonLink || bannerData.link || '/products',
+      link: bannerData.buttonLink || bannerData.link || '/gifts',
       buttonText: bannerData.buttonText || 'Shop Gifts',
       position: 'hero',
       active: true,
@@ -38,6 +39,7 @@ export const bannerService = {
   async updateBanner(id, updatedFields) {
     if (!id || String(id).startsWith('BAN-')) return null;
     return await apiClient.put(`/admin/content/banners/${id}`, {
+      tagline: updatedFields.tagline !== undefined ? updatedFields.tagline : '',
       title: updatedFields.title,
       subtitle: updatedFields.subtitle,
       image: updatedFields.imageUrl || updatedFields.image,

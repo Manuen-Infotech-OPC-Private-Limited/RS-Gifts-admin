@@ -1108,10 +1108,11 @@ export const AdminProvider = ({ children }) => {
 
     try {
       const res = await apiClient.post('/admin/content/banners', {
+        tagline: bannerData.tagline || '',
         title: bannerData.title,
         subtitle: bannerData.subtitle,
         image: bannerData.imageUrl || bannerData.image,
-        link: bannerData.buttonLink || bannerData.link || '/products',
+        link: bannerData.buttonLink || bannerData.link || '/gifts',
         buttonText: bannerData.buttonText || 'Shop Gifts',
         position: 'hero',
         active: true,
@@ -1150,6 +1151,7 @@ export const AdminProvider = ({ children }) => {
     try {
       if (id && !id.startsWith('BAN-')) {
         await apiClient.put(`/admin/content/banners/${id}`, {
+          tagline: updatedFields.tagline !== undefined ? updatedFields.tagline : '',
           title: updatedFields.title,
           subtitle: updatedFields.subtitle,
           image: updatedFields.imageUrl || updatedFields.image,
