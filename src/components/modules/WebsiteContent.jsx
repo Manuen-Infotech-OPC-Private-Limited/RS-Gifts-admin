@@ -166,11 +166,11 @@ export const WebsiteContent = () => {
                   className="bg-white rounded-2xl border border-[#E5DFE3] shadow-card overflow-hidden flex flex-col justify-between isolate"
                   style={{ transform: 'translateZ(0)' }}
                 >
-                  <div className="h-44 relative overflow-hidden rounded-t-[15px] bg-[#FAF6F4]">
+                  <div className="h-44 relative overflow-hidden rounded-t-[15px] bg-[#FAF6F4] flex items-center justify-center">
                     <img
                       src={resolveImageUrl(banner.imageUrl || banner.image, '/images/hero-banner-1.png')}
                       alt={banner.title}
-                      className="w-full h-full object-cover rounded-t-[15px]"
+                      className="w-full h-full object-contain rounded-t-[15px]"
                       onError={(e) => {
                         e.target.onerror = null;
                         const fallback = resolveImageUrl('/images/hero-banner-1.png');
