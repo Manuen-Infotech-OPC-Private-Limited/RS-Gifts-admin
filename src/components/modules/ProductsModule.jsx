@@ -548,7 +548,7 @@ export const ProductsModule = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Regular Price / MRP ({settings.currencySymbol || '₹'}) <span className="text-error">*</span>
+                Regular Price / MRP ({settings.currencySymbol || '₹'})
               </label>
               <input
                 type="number"
@@ -582,7 +582,7 @@ export const ProductsModule = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Inventory Stock Count <span className="text-error">*</span>
+                Inventory Stock Count
               </label>
               <input
                 type="number"

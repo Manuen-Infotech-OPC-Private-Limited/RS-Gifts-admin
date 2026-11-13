@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   TrendingUp,
@@ -15,6 +15,7 @@ import { Badge } from '../common/Badge';
 
 export const DashboardModule = () => {
   const { products, orders, customers, categories, settings } = useAdmin();
+  const currencySymbol = settings?.currencySymbol || '₹';
 
   const totalRevenue = orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
   const totalOrdersCount = orders.length;
@@ -54,27 +55,185 @@ export const DashboardModule = () => {
     },
   ];
 
-  // Dynamic Weekly Sales calculation from actual orders
-  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const dailyTotals = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
-  
-  orders.forEach(order => {
-    if (order.createdAt) {
-      const date = new Date(order.createdAt);
-      const dayIndex = (date.getDay() + 6) % 7; // Convert Sun=0..Sat=6 to Mon=0..Sun=6
-      const dayName = daysOfWeek[dayIndex];
-      if (dayName) {
-        dailyTotals[dayName] += (order.totalAmount || 0);
-      }
-    }
-  });
+  // Sales Visualizer Mode: 'weekly' or 'monthly'
+  const [timeFrame, setTimeFrame] = useState('weekly');
 
-  const maxDailyAmount = Math.max(...Object.values(dailyTotals), 1);
-  const weeklySales = daysOfWeek.map(day => ({
-    day,
-    amount: dailyTotals[day] || 0,
-    height: dailyTotals[day] > 0 ? `${Math.round((dailyTotals[day] / maxDailyAmount) * 100)}%` : '4%'
-  }));
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const monthsOfYear = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Current Calendar Week and Year bounds for perfect chronological accuracy
+  const { weekStart, weekEnd, todayIndex, currentYear, currentMonthIndex, weekSubtitle } = useMemo(() => {
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
+    const todayIndex = (currentDay + 6) % 7; // Mon = 0 ... Fri = 4 ... Sun = 6
+
+    const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday, 0, 0, 0, 0);
+    const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6, 23, 59, 59, 999);
+
+    const opt = { day: 'numeric', month: 'short' };
+    const weekSubtitle = `Daily revenue for This Week (${weekStart.toLocaleDateString('en-IN', opt)} – ${weekEnd.toLocaleDateString('en-IN', opt)})`;
+
+    return {
+      weekStart,
+      weekEnd,
+      todayIndex,
+      currentYear: now.getFullYear(),
+      currentMonthIndex: now.getMonth(),
+      weekSubtitle,
+    };
+  }, []);
+
+  // Dynamic Sales Calculation strictly filtered for current week / current year
+  const { chartData, ceilingAmount } = useMemo(() => {
+    const validOrders = (orders || []).filter(o => o.orderStatus !== 'Cancelled');
+
+    if (timeFrame === 'weekly') {
+      const dailyTotals = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+      const dailyCounts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+
+      validOrders.forEach(order => {
+        const dateStr = order.createdAt || order.date;
+        if (!dateStr) return;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return;
+
+        // PERFECT THIS-WEEK CHECK: Only include orders placed between this week's Monday 00:00 and Sunday 23:59
+        if (d >= weekStart && d <= weekEnd) {
+          const dayIndex = (d.getDay() + 6) % 7;
+          const dayName = daysOfWeek[dayIndex];
+          if (dayName) {
+            dailyTotals[dayName] += Number(order.totalAmount) || 0;
+            dailyCounts[dayName] += 1;
+          }
+        }
+      });
+
+      const rawMax = Math.max(...Object.values(dailyTotals), 500);
+      let ceiling = 1000;
+      if (rawMax <= 1000) ceiling = 1000;
+      else if (rawMax <= 5000) ceiling = Math.ceil(rawMax / 1000) * 1000;
+      else if (rawMax <= 20000) ceiling = Math.ceil(rawMax / 2500) * 2500;
+      else if (rawMax <= 100000) ceiling = Math.ceil(rawMax / 10000) * 10000;
+      else ceiling = Math.ceil(rawMax / 25000) * 25000;
+
+      const items = daysOfWeek.map((day, idx) => {
+        const amount = Math.round(dailyTotals[day] || 0);
+        const count = dailyCounts[day] || 0;
+        const isToday = idx === todayIndex;
+        const isFuture = idx > todayIndex;
+        const heightPercent = amount > 0 
+          ? Math.max(10, Math.min(96, Math.round((amount / ceiling) * 100))) 
+          : 0;
+
+        const displayVal = amount >= 1000 
+          ? `${(amount / 1000).toFixed(1).replace('.0', '')}K` 
+          : `${amount}`;
+
+        return {
+          key: day,
+          label: day,
+          amount,
+          count,
+          isToday,
+          isFuture,
+          displayAmount: displayVal,
+          formattedAmount: amount.toLocaleString('en-IN'),
+          height: amount > 0 ? `${heightPercent}%` : '4px',
+          hasSales: amount > 0,
+        };
+      });
+
+      return {
+        chartData: items,
+        ceilingAmount: ceiling,
+      };
+    } else {
+      // Monthly aggregation strictly filtered for current year
+      const monthlyTotals = {};
+      const monthlyCounts = {};
+      monthsOfYear.forEach(m => {
+        monthlyTotals[m] = 0;
+        monthlyCounts[m] = 0;
+      });
+
+      validOrders.forEach(order => {
+        const dateStr = order.createdAt || order.date;
+        if (!dateStr) return;
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return;
+
+        // PERFECT THIS-YEAR CHECK: Only include orders placed within current calendar year
+        if (d.getFullYear() === currentYear) {
+          const monthName = monthsOfYear[d.getMonth()];
+          if (monthName) {
+            monthlyTotals[monthName] += Number(order.totalAmount) || 0;
+            monthlyCounts[monthName] += 1;
+          }
+        }
+      });
+
+      const rawMax = Math.max(...Object.values(monthlyTotals), 1000);
+      let ceiling = 2000;
+      if (rawMax <= 2000) ceiling = 2000;
+      else if (rawMax <= 10000) ceiling = Math.ceil(rawMax / 2000) * 2000;
+      else if (rawMax <= 50000) ceiling = Math.ceil(rawMax / 10000) * 10000;
+      else if (rawMax <= 200000) ceiling = Math.ceil(rawMax / 25000) * 25000;
+      else ceiling = Math.ceil(rawMax / 50000) * 50000;
+
+      const items = monthsOfYear.map((month, idx) => {
+        const amount = Math.round(monthlyTotals[month] || 0);
+        const count = monthlyCounts[month] || 0;
+        const isCurrent = idx === currentMonthIndex;
+        const isFuture = idx > currentMonthIndex;
+        const heightPercent = amount > 0 
+          ? Math.max(10, Math.min(96, Math.round((amount / ceiling) * 100))) 
+          : 0;
+
+        const displayVal = amount >= 1000 
+          ? `${(amount / 1000).toFixed(1).replace('.0', '')}K` 
+          : `${amount}`;
+
+        return {
+          key: month,
+          label: month,
+          amount,
+          count,
+          isToday: isCurrent,
+          isFuture,
+          displayAmount: displayVal,
+          formattedAmount: amount.toLocaleString('en-IN'),
+          height: amount > 0 ? `${heightPercent}%` : '4px',
+          hasSales: amount > 0,
+        };
+      });
+
+      return {
+        chartData: items,
+        ceilingAmount: ceiling,
+      };
+    }
+  }, [orders, timeFrame, weekStart, weekEnd, todayIndex, currentYear, currentMonthIndex]);
+
+  // Dynamic Y-Axis scale tiers (from ceiling down to 0)
+  const yAxisTiers = useMemo(() => {
+    const formatTier = (val) => {
+      if (val === 0) return '0';
+      if (val >= 1000) {
+        const k = val / 1000;
+        return `${k % 1 === 0 ? k : k.toFixed(1)}K`;
+      }
+      return `${Math.round(val)}`;
+    };
+
+    return [
+      { label: formatTier(ceilingAmount), value: ceilingAmount },
+      { label: formatTier(ceilingAmount * 0.75), value: ceilingAmount * 0.75 },
+      { label: formatTier(ceilingAmount * 0.50), value: ceilingAmount * 0.50 },
+      { label: formatTier(ceilingAmount * 0.25), value: ceilingAmount * 0.25 },
+      { label: '0', value: 0 },
+    ];
+  }, [ceilingAmount]);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -151,45 +310,122 @@ export const DashboardModule = () => {
 
       {/* 2-Column Analytics & Category Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Performance Visualizer */}
+        {/* Sales Performance Visualizer - Weekly & Monthly Dynamic Bar Diagram */}
         <div className="lg:col-span-2 bg-surface p-6 rounded-2xl border border-soft-gray/20 shadow-card flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-4 border-b border-soft-gray/15">
+          {/* Card Header with Weekly / Monthly Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
             <div>
-              <h2 className="text-base font-bold text-charcoal">Weekly Sales Overview</h2>
-              <p className="text-xs text-soft-gray">Daily revenue generated across gift orders</p>
+              <h2 className="text-base font-bold text-charcoal">
+                {timeFrame === 'weekly' ? 'Weekly Sales Overview' : 'Monthly Sales Overview'}
+              </h2>
+              <p className="text-xs text-soft-gray mt-0.5">
+                {timeFrame === 'weekly'
+                  ? weekSubtitle
+                  : `Monthly revenue for ${currentYear} (Jan – Dec)`}
+              </p>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-accent/20 text-charcoal font-semibold">
-              This Week
-            </span>
+
+            {/* Clean Segmented Weekly / Monthly Toggle */}
+            <div className="inline-flex items-center bg-warm-ivory border border-soft-gray/25 rounded-xl p-1 shadow-2xs self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setTimeFrame('weekly')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  timeFrame === 'weekly'
+                    ? 'bg-primary text-surface shadow-xs'
+                    : 'text-soft-gray hover:text-charcoal'
+                }`}
+              >
+                Weekly
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeFrame('monthly')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  timeFrame === 'monthly'
+                    ? 'bg-primary text-surface shadow-xs'
+                    : 'text-soft-gray hover:text-charcoal'
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
           </div>
 
-          <div className="pt-6 pb-2">
-            <div className="flex items-end justify-between h-48 gap-3 sm:gap-6 px-2">
-              {weeklySales.map((item, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="text-[11px] font-semibold text-soft-gray opacity-0 group-hover:opacity-100 transition-opacity">
-                    {settings.currencySymbol || '₹'}{item.amount}
-                  </div>
-                  <div className="w-full bg-warm-ivory rounded-t-xl h-full flex items-end overflow-hidden">
-                    <div
-                      className="w-full bg-primary hover:bg-primary/90 transition-all rounded-t-xl"
-                      style={{ height: item.height }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-soft-gray group-hover:text-charcoal">
-                    {item.day}
+          {/* Dynamic Bar Diagram with Left Y-Axis Scale */}
+          <div className="pt-4 pb-2">
+            <div className="flex h-60 w-full">
+              {/* Left Y-Axis Scale */}
+              <div className="flex flex-col justify-between items-end pr-3 pb-8 text-[11px] font-mono text-soft-gray select-none shrink-0 w-12 sm:w-14">
+                {yAxisTiers.map((tier, idx) => (
+                  <span key={idx} className="leading-none font-semibold">
+                    {currencySymbol}{tier.label}
                   </span>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-soft-gray/15 text-xs text-soft-gray">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-primary inline-block" />
-              <span>Orders Revenue</span>
+              {/* Chart Canvas: Dynamic Vertical Bars */}
+              <div className="flex-1 relative flex flex-col justify-between">
+                {/* Vertical Bars Area */}
+                <div className="relative z-10 flex-1 pb-8 flex items-end justify-between gap-1 sm:gap-2.5 px-1 sm:px-2">
+                  {chartData.map((item) => (
+                    <div
+                      key={item.key}
+                      className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer"
+                      title={`${item.label}${item.isToday ? ' (Today)' : item.isFuture ? ' (Upcoming)' : ''}: ${currencySymbol}${item.formattedAmount} (${item.count} orders)`}
+                    >
+                      {/* Amount above bar - Only show amount when there are sales */}
+                      <div className="h-4 flex items-center justify-center mb-1.5">
+                        {item.hasSales && (
+                          <span className="text-[10px] sm:text-[11px] font-bold text-charcoal group-hover:text-primary transition-all whitespace-nowrap">
+                            {currencySymbol}{item.displayAmount}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bar Container - Clean and without ghost capsule when empty */}
+                      <div className="w-full max-w-[32px] sm:max-w-[42px] h-full flex items-end justify-center">
+                        {item.hasSales ? (
+                          <div
+                            className="w-full bg-primary hover:bg-primary/85 rounded-t-xl transition-all duration-500 ease-out group-hover:shadow-md"
+                            style={{ height: item.height }}
+                          />
+                        ) : (
+                          <div className="w-5 sm:w-6 h-1 rounded-full bg-soft-gray/20 mb-0.5" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bottom X-Axis Labels */}
+                <div className="flex items-center justify-between gap-1 sm:gap-2.5 px-1 sm:px-2 pt-1">
+                  {chartData.map((item) => (
+                    <div
+                      key={item.key}
+                      className="flex-1 text-center"
+                    >
+                      <div
+                        className={`text-[11px] sm:text-xs font-semibold transition-colors ${
+                          item.isToday
+                            ? 'text-primary font-bold'
+                            : item.hasSales
+                            ? 'text-charcoal'
+                            : 'text-soft-gray'
+                        }`}
+                      >
+                        {item.label}
+                      </div>
+                      {timeFrame === 'weekly' && item.isToday && (
+                        <span className="inline-block text-[9px] font-bold text-primary bg-primary/10 px-1 py-0.5 rounded-sm mt-0.5 leading-none">
+                          Today
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <span>Calculated from live orders</span>
           </div>
         </div>
 

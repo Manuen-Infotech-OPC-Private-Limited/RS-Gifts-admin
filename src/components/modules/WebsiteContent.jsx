@@ -16,6 +16,7 @@ export const WebsiteContent = () => {
   const {
     banners,
     products,
+    categories,
     addBanner,
     updateBanner,
     deleteBanner,
@@ -44,6 +45,23 @@ export const WebsiteContent = () => {
   const [bannerErrors, setBannerErrors] = useState({});
 
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const getCleanTargetName = (link) => {
+    if (!link) return 'All Gifts';
+    if (link === '/gifts') return 'All Gifts';
+    if (link === '/contact') return 'Contact Us';
+    if (String(link).includes('wa.me')) return 'WhatsApp Chat';
+
+    const cleanSlug = String(link).replace(/^\/category\//, '').replace(/^\//, '');
+    const matched = (categories || []).find(
+      (c) => (c.slug || c.id) === cleanSlug || (c.slug || c.id) === link
+    );
+    if (matched) return matched.name;
+
+    return cleanSlug
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  };
 
   const handleOpenAddBanner = () => {
     setEditingBanner(null);
@@ -166,11 +184,11 @@ export const WebsiteContent = () => {
                   className="bg-white rounded-2xl border border-[#E5DFE3] shadow-card overflow-hidden flex flex-col justify-between isolate"
                   style={{ transform: 'translateZ(0)' }}
                 >
-                  <div className="h-44 relative overflow-hidden rounded-t-[15px] bg-[#FAF6F4] flex items-center justify-center">
+                  <div className="h-44 relative overflow-hidden rounded-t-[15px] bg-[#FAF6F4]">
                     <img
                       src={resolveImageUrl(banner.imageUrl || banner.image, '/images/hero-banner-1.png')}
                       alt={banner.title}
-                      className="w-full h-full object-contain rounded-t-[15px]"
+                      className="w-full h-full object-cover rounded-t-[15px]"
                       onError={(e) => {
                         e.target.onerror = null;
                         const fallback = resolveImageUrl('/images/hero-banner-1.png');
@@ -210,7 +228,7 @@ export const WebsiteContent = () => {
 
                   <div className="p-4 flex items-center justify-between bg-white border-t border-[#E5DFE3]">
                     <div className="text-xs text-soft-gray font-medium truncate max-w-[200px]">
-                      Button: <span className="text-charcoal font-semibold">{banner.buttonText || 'Shop Now'}</span> ({banner.buttonLink || banner.link || '/gifts'})
+                      Button: <span className="text-charcoal font-semibold">{banner.buttonText || 'Shop Now'}</span> → <span className="text-primary font-medium">{getCleanTargetName(banner.buttonLink || banner.link || '/gifts')}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <button
@@ -416,73 +434,75 @@ export const WebsiteContent = () => {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Button Link
+                Button Target (Category / Page)
               </label>
               <select
                 value={bannerForm.buttonLink}
                 onChange={(e) => setBannerForm({ ...bannerForm, buttonLink: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary cursor-pointer"
               >
-                <option value="/gifts">All Gifts (/gifts)</option>
-                <option value="/birthday-gifts">Birthday Gifts (/birthday-gifts)</option>
-                <option value="/personalized-gifts">Personalized Gifts (/personalized-gifts)</option>
-                <option value="/category/flowers-hampers">Flowers & Hampers (/category/flowers-hampers)</option>
-                <option value="/category/toys-kids">Teddy & Plush Toys (/category/toys-kids)</option>
-                <option value="/anniversary-gifts">Anniversary Gifts (/anniversary-gifts)</option>
-                <option value="/category/corporate-gifts">Corporate Gifts (/category/corporate-gifts)</option>
-                <option value="/category/home-decor">Home Decor (/category/home-decor)</option>
-                <option value="/contact">Contact Us (/contact)</option>
-                <option value="https://wa.me/919876543210">WhatsApp Chat</option>
-                {!['/gifts', '/birthday-gifts', '/personalized-gifts', '/category/flowers-hampers', '/category/toys-kids', '/anniversary-gifts', '/category/corporate-gifts', '/category/home-decor', '/contact', 'https://wa.me/919876543210'].includes(bannerForm.buttonLink) && bannerForm.buttonLink && (
-                  <option value={bannerForm.buttonLink}>{bannerForm.buttonLink}</option>
-                )}
+                <optgroup label="Store Pages">
+                  <option value="/gifts">All Gifts</option>
+                  <option value="/contact">Contact Us</option>
+                  <option value="https://wa.me/919876543210">WhatsApp Chat</option>
+                </optgroup>
+                <optgroup label="Gift Categories">
+                  {categories && categories.length > 0 ? (
+                    categories
+                      .filter((cat) => cat.slug !== 'gifts' && cat.name.toLowerCase() !== 'gifts')
+                      .map((cat) => {
+                        const slug = cat.slug || cat.id;
+                        const path = `/category/${slug}`;
+                        return (
+                          <option key={cat._id || cat.id} value={path}>
+                            {cat.name}
+                          </option>
+                        );
+                      })
+                  ) : (
+                    <>
+                      <option value="/category/accessories">Accessories</option>
+                      <option value="/category/anniversary-gifts">Anniversary Gifts</option>
+                      <option value="/category/birthday-gifts">Birthday Gifts</option>
+                      <option value="/category/corporate-gifts">Corporate Gifts</option>
+                      <option value="/category/festival-gifts">Festival Gifts</option>
+                      <option value="/category/flowers-and-hampers">Flowers and Hampers</option>
+                      <option value="/category/home-decor">Home Decor</option>
+                      <option value="/category/personalized-gifts">Personalized Gifts</option>
+                      <option value="/category/toys-and-kids">Toys and Kids</option>
+                    </>
+                  )}
+                </optgroup>
+                {bannerForm.buttonLink &&
+                  ![
+                    '/gifts',
+                    '/contact',
+                    'https://wa.me/919876543210',
+                    ...(categories || []).map((c) => `/category/${c.slug || c.id}`),
+                    '/category/accessories',
+                    '/category/anniversary-gifts',
+                    '/category/birthday-gifts',
+                    '/category/corporate-gifts',
+                    '/category/festival-gifts',
+                    '/category/flowers-and-hampers',
+                    '/category/home-decor',
+                    '/category/personalized-gifts',
+                    '/category/toys-and-kids',
+                  ].includes(bannerForm.buttonLink) && (
+                    <optgroup label="Selected Target">
+                      <option value={bannerForm.buttonLink}>
+                        {getCleanTargetName(bannerForm.buttonLink)}
+                      </option>
+                    </optgroup>
+                  )}
               </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Badge 1
-              </label>
-              <input
-                type="text"
-                value={bannerForm.badge1}
-                onChange={(e) => setBannerForm({ ...bannerForm, badge1: e.target.value })}
-                placeholder="Fast & Reliable Delivery"
-                className="w-full px-3 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Badge 2
-              </label>
-              <input
-                type="text"
-                value={bannerForm.badge2}
-                onChange={(e) => setBannerForm({ ...bannerForm, badge2: e.target.value })}
-                placeholder="Secure Payments"
-                className="w-full px-3 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-charcoal mb-1">
-                Badge 3
-              </label>
-              <input
-                type="text"
-                value={bannerForm.badge3}
-                onChange={(e) => setBannerForm({ ...bannerForm, badge3: e.target.value })}
-                placeholder="Easy Returns"
-                className="w-full px-3 py-2 rounded-xl border border-soft-gray/25 text-sm text-charcoal bg-surface focus:border-primary"
-              />
             </div>
           </div>
 
           <CloudinaryUpload
             value={bannerForm.imageUrl}
             onChange={(url) => setBannerForm({ ...bannerForm, imageUrl: url })}
-            label="Banner Hero Image *"
+            label="Banner Hero Image"
             preferredSize="1920 × 600 px"
             aspectRatio="21:9 (Ultra-Wide)"
             dimensionNote="Recommended: 1920 px Width × 600 px Height (Ultra-Wide ~21:9). More width, less height."

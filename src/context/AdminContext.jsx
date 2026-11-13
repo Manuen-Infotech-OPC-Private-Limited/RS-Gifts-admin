@@ -34,6 +34,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import apiClient from '../services/api';
 import customerService from '../services/customerService';
 import { updateTabFavicon } from '../utils/urlHelper';
+import { getSocket } from '../services/socket';
 import {
   initialCategories,
   initialOccasions,
@@ -472,6 +473,174 @@ export const AdminProvider = ({ children }) => {
         }
       })
       .catch(e => console.warn('Could not load live backend customers:', e.message));
+  }, []);
+
+  // Fast background auto-sync backup every 15s so orders list never lags behind
+  useEffect(() => {
+    const fetchFreshOrders = () => {
+      apiClient.get('/admin/orders')
+        .then(res => {
+          const liveOrders = res.data?.orders;
+          if (Array.isArray(liveOrders) && liveOrders.length > 0) {
+            setState(prev => {
+              const hasDiff = liveOrders.length !== prev.orders.length ||
+                liveOrders.some(lo => {
+                  const curr = prev.orders.find(po => po._id === lo._id || po.orderNumber === lo.orderNumber);
+                  return !curr || curr.orderStatus !== lo.orderStatus || curr.paymentStatus !== lo.paymentStatus;
+                });
+              if (!hasDiff) return prev;
+              const mapped = liveOrders.map(o => ({
+                ...o,
+                id: o.orderNumber || o._id,
+                _id: o._id,
+                orderNumber: o.orderNumber,
+                customerName: (typeof o.customerInfo?.name === 'string' && o.customerInfo.name) || (typeof o.customerName === 'string' && o.customerName) || (typeof o.shippingAddress?.recipientName === 'string' && o.shippingAddress.recipientName) || 'Customer',
+                customerEmail: (typeof o.customerInfo?.email === 'string' && o.customerInfo.email) || (typeof o.customerEmail === 'string' && o.customerEmail) || '',
+                customerPhone: (typeof o.customerInfo?.phone === 'string' && o.customerInfo.phone) || (typeof o.customerPhone === 'string' && o.customerPhone) || (typeof o.shippingAddress?.phone === 'string' && o.shippingAddress.phone) || '',
+                totalAmount: o.totalAmount || 0,
+                orderStatus: o.orderStatus || 'Pending',
+                paymentStatus: o.paymentStatus || 'Pending',
+                shippingAddress: o.shippingAddress || {},
+                items: (o.items || []).map(item => ({
+                  ...item,
+                  title: item.title || item.product?.title || 'Gift Item',
+                  image: item.image || item.product?.image || item.product?.images?.[0] || '',
+                  productId: item.productId || item.product?.productId || item.product?.sku || '',
+                  sku: item.sku || item.product?.sku || item.product?.productId || '',
+                  price: item.price ?? item.product?.price ?? 0,
+                  quantity: item.quantity || 1,
+                  category: item.product?.category || '',
+                  personalizationData: item.personalizationData || {}
+                })),
+                tracking: o.tracking || { carrier: '', trackingNumber: '', trackingUrl: '' },
+                notes: o.notes || '',
+                createdAt: o.createdAt,
+              }));
+              return { ...prev, orders: mapped };
+            });
+          }
+        })
+        .catch(() => {});
+    };
+
+    const interval = setInterval(fetchFreshOrders, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Real-time WebSocket listener for live orders and status updates
+  useEffect(() => {
+    let socket;
+    try {
+      socket = getSocket();
+    } catch (e) {
+      console.warn('[WebSocket] Init failed:', e);
+      return;
+    }
+
+    const handleNewOrder = (order) => {
+      if (!order) return;
+      const orderNum = order.orderNumber || order._id?.slice(-6) || 'NEW';
+      const custName = order.customerInfo?.name || order.shippingAddress?.recipientName || 'Customer';
+      const total = order.totalAmount ? `₹${order.totalAmount}` : '';
+      showToast(`🔔 New Order #${orderNum} received from ${custName} (${total})!`, 'info');
+
+      setState(prev => {
+        const exists = prev.orders.some(o => o._id === order._id || o.orderNumber === order.orderNumber);
+        if (exists) return prev;
+        const normalized = {
+          ...order,
+          id: order.orderNumber || order._id,
+          _id: order._id,
+          orderNumber: order.orderNumber,
+          customerName: custName,
+          customerEmail: order.customerInfo?.email || '',
+          customerPhone: order.customerInfo?.phone || order.shippingAddress?.phone || '',
+          totalAmount: order.totalAmount || 0,
+          orderStatus: order.orderStatus || 'Pending',
+          paymentStatus: order.paymentStatus || 'Pending',
+          shippingAddress: order.shippingAddress || {},
+          items: order.items || [],
+          tracking: order.tracking || { carrier: '', trackingNumber: '', trackingUrl: '' },
+          notes: order.notes || '',
+          createdAt: order.createdAt || new Date().toISOString(),
+        };
+        return {
+          ...prev,
+          orders: [normalized, ...prev.orders],
+        };
+      });
+
+      // Background full server sync to refresh relations & stats
+      apiClient.get('/admin/orders')
+        .then(res => {
+          const liveOrders = res.data?.orders || [];
+          if (Array.isArray(liveOrders) && liveOrders.length > 0) {
+            setState(prev => {
+              const mapped = liveOrders.map(o => ({
+                ...o,
+                id: o.orderNumber || o._id,
+                _id: o._id,
+                orderNumber: o.orderNumber,
+                customerName: (typeof o.customerInfo?.name === 'string' && o.customerInfo.name) || (typeof o.customerName === 'string' && o.customerName) || (typeof o.shippingAddress?.recipientName === 'string' && o.shippingAddress.recipientName) || 'Customer',
+                customerEmail: (typeof o.customerInfo?.email === 'string' && o.customerInfo.email) || (typeof o.customerEmail === 'string' && o.customerEmail) || '',
+                customerPhone: (typeof o.customerInfo?.phone === 'string' && o.customerInfo.phone) || (typeof o.customerPhone === 'string' && o.customerPhone) || (typeof o.shippingAddress?.phone === 'string' && o.shippingAddress.phone) || '',
+                totalAmount: o.totalAmount || 0,
+                orderStatus: o.orderStatus || 'Pending',
+                paymentStatus: o.paymentStatus || 'Pending',
+                shippingAddress: o.shippingAddress || {},
+                items: (o.items || []).map(item => ({
+                  ...item,
+                  title: item.title || item.product?.title || 'Gift Item',
+                  image: item.image || item.product?.image || item.product?.images?.[0] || '',
+                  productId: item.productId || item.product?.productId || item.product?.sku || '',
+                  sku: item.sku || item.product?.sku || item.product?.productId || '',
+                  price: item.price ?? item.product?.price ?? 0,
+                  quantity: item.quantity || 1,
+                  category: item.product?.category || '',
+                  personalizationData: item.personalizationData || {}
+                })),
+                tracking: o.tracking || { carrier: '', trackingNumber: '', trackingUrl: '' },
+                notes: o.notes || '',
+                createdAt: o.createdAt,
+              }));
+              return { ...prev, orders: mapped };
+            });
+          }
+        })
+        .catch(() => {});
+    };
+
+    const handleOrderUpdated = (updated) => {
+      if (!updated) return;
+      setState(prev => ({
+        ...prev,
+        orders: prev.orders.map(o => (o._id === updated._id || o.orderNumber === updated.orderNumber) ? {
+          ...o,
+          ...updated,
+          orderStatus: updated.orderStatus || o.orderStatus,
+          paymentStatus: updated.paymentStatus || o.paymentStatus,
+          tracking: updated.tracking || o.tracking,
+          statusHistory: updated.statusHistory || o.statusHistory,
+        } : o)
+      }));
+    };
+
+    const handleOrderDeleted = ({ orderId, orderNumber }) => {
+      setState(prev => ({
+        ...prev,
+        orders: prev.orders.filter(o => o._id !== orderId && o.orderNumber !== orderNumber)
+      }));
+    };
+
+    socket.on('new_order', handleNewOrder);
+    socket.on('order_updated', handleOrderUpdated);
+    socket.on('order_deleted', handleOrderDeleted);
+
+    return () => {
+      socket.off('new_order', handleNewOrder);
+      socket.off('order_updated', handleOrderUpdated);
+      socket.off('order_deleted', handleOrderDeleted);
+    };
   }, []);
 
   const addProduct = async (productData) => {

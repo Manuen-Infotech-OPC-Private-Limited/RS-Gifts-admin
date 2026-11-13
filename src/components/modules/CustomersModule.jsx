@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   Mail, 
@@ -16,7 +16,9 @@ import {
   Users, 
   CreditCard,
   Gift,
-  Package
+  Package,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { Modal } from '../common/Modal';
@@ -75,6 +77,33 @@ export const CustomersModule = () => {
 
     return name.includes(term) || email.includes(term) || phone.includes(term) || location.includes(term);
   });
+
+  // Pagination (8 customers per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCustomers = useMemo(() => {
+    return filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCustomers, startIndex, itemsPerPage]);
+
+  const getPageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+    if (currentPage >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+  };
 
   // Calculate customer orders (matches by email, phone, or customer ID)
   const getCustomerOrders = (customer) => {
@@ -222,22 +251,22 @@ export const CustomersModule = () => {
 
       {/* Customer Data Table */}
       <div className="bg-surface rounded-2xl border border-soft-gray/20 shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-charcoal">
-            <thead className="bg-warm-ivory/60 text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15">
+        <div className="overflow-x-auto overflow-y-auto max-h-[520px] no-scrollbar">
+          <table className="w-full text-left text-sm text-charcoal relative border-collapse">
+            <thead className="sticky top-0 z-20 bg-warm-ivory text-xs uppercase font-semibold text-soft-gray border-b border-soft-gray/15 shadow-xs">
               <tr>
-                <th className="px-6 py-3.5">Customer Name & ID</th>
-                <th className="px-6 py-3.5">Contact Details</th>
-                <th className="px-6 py-3.5">Gender / DOB</th>
-                <th className="px-6 py-3.5">Primary Location</th>
-                <th className="px-6 py-3.5 text-center">Orders</th>
-                <th className="px-6 py-3.5">Total Spent</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Action</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Customer Name & ID</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Contact Details</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Gender / DOB</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Primary Location</th>
+                <th className="px-6 py-3.5 text-center bg-warm-ivory">Orders</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Total Spent</th>
+                <th className="px-6 py-3.5 bg-warm-ivory">Status</th>
+                <th className="px-6 py-3.5 text-right bg-warm-ivory">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-soft-gray/10">
-              {filteredCustomers.map((cust) => {
+              {paginatedCustomers.map((cust) => {
                 const displayName = cust.name || `${cust.firstName || ''} ${cust.lastName || ''}`.trim() || 'Customer';
                 const initial = displayName.charAt(0).toUpperCase() || 'C';
                 const isActive = cust.isActive !== false;
@@ -363,15 +392,83 @@ export const CustomersModule = () => {
 
               {filteredCustomers.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="text-center py-16 text-sm text-soft-gray">
-                    {(customers || []).length === 0
-                      ? 'No customer accounts found in the database. Customer profiles will automatically appear here as users register on the website.'
-                      : 'No customer accounts match your current search query.'}
+                  <td colSpan="8" className="text-center py-20 text-sm text-soft-gray">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Users className="w-10 h-10 text-soft-gray/35" />
+                      <p className="font-semibold text-charcoal">
+                        {(customers || []).length === 0
+                          ? 'No customer accounts registered yet'
+                          : 'No customer accounts match your current search query'}
+                      </p>
+                      <p className="text-xs text-soft-gray">
+                        {(customers || []).length === 0
+                          ? 'Registered customers will automatically appear here (Fixed 8 per page)'
+                          : 'Try searching with a different name, email, or phone number'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Customers Pagination Bar (Permanently Fixed at bottom) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-3.5 bg-warm-ivory/60 border-t border-soft-gray/15 text-xs text-soft-gray shrink-0">
+          <div className="font-medium">
+            Showing{' '}
+            <span className="font-semibold text-charcoal">
+              {filteredCustomers.length === 0 ? 0 : startIndex + 1}
+            </span>{' '}
+            to{' '}
+            <span className="font-semibold text-charcoal">
+              {Math.min(startIndex + itemsPerPage, filteredCustomers.length)}
+            </span>{' '}
+            of <span className="font-semibold text-charcoal">{filteredCustomers.length}</span> customers
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {getPageNumbers().map((item, idx) =>
+              item === '...' ? (
+                <span key={`ellipsis-${idx}`} className="px-1 text-soft-gray font-bold">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={`page-${item}`}
+                  type="button"
+                  onClick={() => setCurrentPage(item)}
+                  className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    currentPage === item
+                      ? 'bg-primary text-surface shadow-xs font-bold'
+                      : 'text-charcoal hover:bg-warm-ivory/80 border border-soft-gray/20 bg-surface'
+                  }`}
+                >
+                  {item}
+                </button>
+              )
+            )}
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="p-1.5 rounded-lg border border-soft-gray/25 text-charcoal hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
